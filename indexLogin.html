@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>5-F Sınıfı Giriş Ekranı</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #2c3e50; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .login-card { width: 100%; max-width: 400px; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+    h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; }
+    .form-group { margin-bottom: 20px; }
+    label { font-weight: 600; display: block; margin-bottom: 8px; color: #34495e; }
+    input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+    button { width: 100%; padding: 12px; background-color: #2980b9; color: white; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+    button:hover { background-color: #2471a3; }
+    #status { margin-top: 15px; text-align: center; font-weight: bold; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="login-card">
+  <h2>5-F Öğrenci Girişi</h2>
+  <form id="loginForm">
+    <div class="form-group">
+      <label>Öğrenci Numarası:</label>
+      <input type="number" id="ogrenciNo" placeholder="Örn: 1258" required>
+    </div>
+    <div class="form-group">
+      <label>Şifre:</label>
+      <input type="password" id="sifre" placeholder="Şifrenizi girin" required>
+    </div>
+    <button type="submit" id="loginBtn">Giriş Yap</button>
+  </form>
+  <div id="status"></div>
+</div>
+
+<script>
+  // BURAYA APPS SCRIPT WEB APP URL'NİZİ YAPIŞtIRIN:
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwqPYdaV7GqLJKTl-mTS8OjopUMpHBrpWfB4ED275aoQKEAc0qgpsUFfHgWpC8p0iU/exec";
+
+  sessionStorage.removeItem("girisYapanNo");
+  sessionStorage.removeItem("girisYapanAd");
+
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const no = document.getElementById('ogrenciNo').value.trim();
+    const sifre = document.getElementById('sifre').value.trim();
+    const statusDiv = document.getElementById('status');
+
+    statusDiv.innerText = "Giriş yapılıyor...";
+    statusDiv.style.color = "blue";
+
+    fetch(`${SCRIPT_URL}?no=${no}&sifre=${encodeURIComponent(sifre)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          statusDiv.innerText = "Giriş başarılı, yönlendiriliyorsunuz...";
+          statusDiv.style.color = "green";
+          
+          sessionStorage.setItem("girisYapanNo", no);
+          sessionStorage.setItem("girisYapanAd", data.adSoyad);
+          
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 800);
+        } else {
+          statusDiv.innerText = data.message || "Hatalı numara veya şifre!";
+          statusDiv.style.color = "red";
+        }
+      })
+      .catch(err => {
+        statusDiv.innerText = "Bağlantı hatası!";
+        statusDiv.style.color = "red";
+      });
+  });
+</script>
+
+</body>
+</html>

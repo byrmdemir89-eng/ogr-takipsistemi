@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>5-F Sınıfı Çalışma Takip Formu</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+    .card { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h2, h3 { text-align: center; color: #2c3e50; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .logout-btn { background-color: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .logout-btn:hover { background-color: #c0392b; }
+    .form-group { margin-bottom: 15px; }
+    label { font-weight: 600; display: block; margin-bottom: 5px; color: #34495e; }
+    select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+    input[readonly] { background-color: #eef2f5; font-weight: bold; color: #2c3e50; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    button[type="submit"] { width: 100%; padding: 12px; background-color: #27ae60; color: white; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+    button[type="submit"]:hover { background-color: #219150; }
+    #status { margin-top: 15px; text-align: center; font-weight: bold; }
+    .summary-box { background: #eef2f5; padding: 10px; border-radius: 6px; margin-top: 10px; text-align: center; font-weight: bold; color: #2c3e50; }
+    
+    .history-container { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background-color: #2c3e50; color: white; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="top-bar">
+    <span id="userInfo" style="font-weight: bold; color: #2c3e50;">Yükleniyor...</span>
+    <button class="logout-btn" onclick="cikisYap()">Çıkış Yap</button>
+  </div>
+
+  <h2>5-F Günlük Takip Formu</h2>
+  <form id="studyForm">
+    
+    <div class="grid-3">
+      <div class="form-group">
+        <label>Gün:</label>
+        <select id="gun" required>
+          <option value="Pazartesi">Pazartesi</option>
+          <option value="Salı">Salı</option>
+          <option value="Çarşamba">Çarşamba</option>
+          <option value="Perşembe">Perşembe</option>
+          <option value="Cuma">Cuma</option>
+          <option value="Cumartesi">Cumartesi</option>
+          <option value="Pazar">Pazar</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Blok:</label>
+        <select id="blok" required>
+          <option value="1. Blok">1. Blok</option>
+          <option value="2. Blok">2. Blok</option>
+          <option value="3. Blok">3. Blok</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Ders:</label>
+        <select id="ders" required>
+          <option value="Türkçe">Türkçe</option>
+          <option value="Matematik">Matematik</option>
+          <option value="Fen Bilimleri">Fen Bilimleri</option>
+          <option value="Sosyal Bilgiler">Sosyal Bilgiler</option>
+          <option value="İngilizce">İngilizce</option>
+          <option value="Din Kültürü">Din Kültürü</option>
+          <option value="Paragraf">Paragraf</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>15 Dk Konu Çalışması Yapıldı mı?</label>
+      <select id="konuCalisildi" required>
+        <option value="Evet, Tamamlandı">Evet, Tamamlandı</option>
+        <option value="Kısmen Yapıldı">Kısmen Yapıldı</option>
+        <option value="Hayır, Yapılmadı">Hayır, Yapılmadı</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Konu Çalışmama / Eksik Nedeni (Varsa):</label>
+      <input type="text" id="eksikNedeni" placeholder="Örn: 10 soru bulunamadı / Zaman yetmedi">
+    </div>
+
+    <div class="form-group">
+      <label>Hedef Soru Sayısı:</label>
+      <input type="number" id="hedefSoru" value="10" required>
+    </div>
+
+    <div class="grid-3">
+      <div class="form-group">
+        <label>Doğru:</label>
+        <input type="number" id="dogru" value="0" min="0" required>
+      </div>
+      <div class="form-group">
+        <label>Yanlış:</label>
+        <input type="number" id="yanlis" value="0" min="0" required>
+      </div>
+      <div class="form-group">
+        <label>Boş:</label>
+        <input type="number" id="bos" value="0" min="0" required>
+      </div>
+    </div>
+
+    <div class="summary-box" id="toplamOzet">
+      Toplam Çözülen Soru: 0 | Hesaplanan Net: 0.00
+    </div>
+
+    <button type="submit" id="submitBtn">Kaydet ve Gönder</button>
+  </form>
+  <div id="status"></div>
+
+  <div class="history-container">
+    <h3>Geçmiş Çalışmalarınız</h3>
+    <div style="overflow-x: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Tarih</th>
+            <th>Gün</th>
+            <th>Ders</th>
+            <th>Hedef</th>
+            <th>Çözülen</th>
+            <th>Net</th>
+            <th>Durum</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <tr><td colspan="7">Yükleniyor...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // BURAYA APPS SCRIPT WEB APP URL'NİZİ YAPIŞTIRIN:
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwqPYdaV7GqLJKTl-mTS8OjopUMpHBrpWfB4ED275aoQKEAc0qgpsUFfHgWpC8p0iU/exec";
+
+  const aktifNo = sessionStorage.getItem("girisYapanNo");
+  const aktifAd = sessionStorage.getItem("girisYapanAd");
+
+  if (!aktifNo || !aktifAd) {
+    window.location.replace("indexLogin.html");
+  } else {
+    document.getElementById("userInfo").innerText = `Öğrenci: ${aktifAd} (${aktifNo})`;
+    gecmisiGetir(aktifNo);
+  }
+
+function cikisYap() {
+    // Oturum verilerini temizle
+    sessionStorage.clear();
+    localStorage.clear();
+    
+    // Bulunduğumuz klasörün yolunu otomatik tespit edip indexLogin.html'e yönlendirir
+    var path = window.location.href;
+    var baseDir = path.substring(0, path.lastIndexOf('/') + 1);
+    window.location.replace(baseDir + "indexLogin.html");
+  }
+  function gecmisiGetir(no) {
+    fetch(`${SCRIPT_URL}?no=${no}&islem=gecmis`)
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = "";
+        if (data.success && data.gecmis && data.gecmis.length > 0) {
+          data.gecmis.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${item.tarih}</td>
+              <td>${item.gun} (${item.blok})</td>
+              <td>${item.ders}</td>
+              <td>${item.hedef}</td>
+              <td>${item.cozulen}</td>
+              <td><b>${item.net}</b></td>
+              <td style="color: ${item.durum === 'Tamamlandı' ? 'green' : 'red'};">${item.durum}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        } else {
+          tbody.innerHTML = `<tr><td colspan="7">Henüz kayıtlı çalışmanız bulunmuyor.</td></tr>`;
+        }
+      })
+      .catch(err => {
+        document.getElementById('historyTableBody').innerHTML = `<tr><td colspan="7" style="color:red;">Geçmiş yüklenemedi.</td></tr>`;
+      });
+  }
+
+  function hesaplaOzet() {
+    const d = parseInt(document.getElementById('dogru').value) || 0;
+    const y = parseInt(document.getElementById('yanlis').value) || 0;
+    const b = parseInt(document.getElementById('bos').value) || 0;
+    const cozulen = d + y + b;
+    const net = (d - (y / 3)).toFixed(2);
+    document.getElementById('toplamOzet').innerText = `Toplam Çözülen Soru: ${cozulen} | Hesaplanan Net: ${net}`;
+  }
+
+  document.getElementById('dogru').addEventListener('input', hesaplaOzet);
+  document.getElementById('yanlis').addEventListener('input', hesaplaOzet);
+  document.getElementById('bos').addEventListener('input', hesaplaOzet);
+
+  document.getElementById('studyForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const statusDiv = document.getElementById('status');
+
+    statusDiv.innerText = "Kaydediliyor...";
+    statusDiv.style.color = "blue";
+
+    const payload = {
+      ogrenciNo: aktifNo,
+      ogrenciIsim: aktifAd,
+      gun: document.getElementById('gun').value,
+      blok: document.getElementById('blok').value,
+      ders: document.getElementById('ders').value,
+      konuCalisildi: document.getElementById('konuCalisildi').value,
+      eksikNedeni: document.getElementById('eksikNedeni').value,
+      hedefSoru: parseInt(document.getElementById('hedefSoru').value) || 0,
+      dogru: parseInt(document.getElementById('dogru').value) || 0,
+      yanlis: parseInt(document.getElementById('yanlis').value) || 0,
+      bos: parseInt(document.getElementById('bos').value) || 0
+    };
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.result === "success") {
+        statusDiv.innerText = " Başarıyla kaydedildi!";
+        statusDiv.style.color = "green";
+        
+        document.getElementById('dogru').value = 0;
+        document.getElementById('yanlis').value = 0;
+        document.getElementById('bos').value = 0;
+        document.getElementById('eksikNedeni').value = "";
+        hesaplaOzet();
+
+        gecmisiGetir(aktifNo);
+        setTimeout(() => { statusDiv.innerText = ""; }, 2000);
+      } else {
+        statusDiv.innerText = " Kaydedilemedi!";
+        statusDiv.style.color = "red";
+      }
+    })
+    .catch(error => {
+      statusDiv.innerText = " Hata oluştu: " + error;
+      statusDiv.style.color = "red";
+    });
+  });
+</script>
+
+</body>
+</html>
