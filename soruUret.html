@@ -77,7 +77,7 @@
     // Giriş yapmış öğrenci numarasını hafızadan/oturumdan alıyoruz
     const ogrNo = localStorage.getItem("ogrNo") || sessionStorage.getItem("ogrNo") || "TEST_OGRENCI";
 
-    function apiKeyKaydet() {
+function apiKeyKaydet() {
         const apiKey = document.getElementById("userApiKey").value.trim();
         if (!apiKey) {
             alert("Lütfen geçerli bir API Key girin!");
@@ -90,11 +90,14 @@
             if (data.success) {
                 alert("API Anahtarınız başarıyla Google Sheets sistemine kaydedildi!");
             } else {
-                alert("Hata: " + data.error);
+                alert("Google Sheets Hatası: " + (data.error || data.message || "Bilinmeyen hata"));
             }
         })
-        .catch(err => alert("Bağlantı hatası oluştu!"));
-    }
+        .catch(err => {
+            alert("Bağlantı/JSON Çözümleme Hatası: " + err);
+            console.error(err);
+        });
+    }    
 
     function soruUret() {
         const ders = document.getElementById("ders").value;
@@ -149,6 +152,77 @@
             console.error(err);
         });
     }
+
+function geminiSoruUretOgr(ogrNo, ders, konu, soruSayisi) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("geminiApıKey") || ss.getSheetByName("GeminiApiKey");
+  
+  if (!sheet) {
+    return { error: "'geminiApıKey' sayfası bulunamadı!" };
+  }
+
+  var data = sheet.getDataRange().getValues();
+  var userApiKey = "";
+
+  for (var i = 1; i < data.length; i++) {
+    var dbNo = String(data[i][0]).replace(/\.0$/, "").trim();
+    if (dbNo === String(ogrNo).trim()) {
+      userApiKey = data[i][1];
+      break;
+    }
+  }
+
+  if (!userApiKey) {
+    return { error: "API_KEY_YOK", message: "Soru üretebilmek için önce profilinize Gemini API Key eklemelisiniz!" };
+  }
+
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + userApiKey;
+  
+  var prompt = "Sen MEB müfredatına uygun soru hazırlayan bir öğretmensin.\n" +
+               "Ders: " + ders + "\n" +
+               "Konu: " + konu + "\n" +
+               "Soru Sayısı: " + soruSayisi + "\n\n" +
+               "MEB/LGS tarzında " + soruSayisi + " adet çoktan seçmeli soru hazırla.\n" +
+               "Cevap olarak SADECE geçerli bir JSON dizisi döndür. Başka hiçbir metin yazma.\n\n" +
+               "JSON Formatı:\n" +
+               "[\n" +
+               "  {\n" +
+               "    \"soruNo\": 1,\n" +
+               "    \"soruMetni\": \"Soru metni...\",\n" +
+               "    \"siklar\": {\"A\": \"...\", \"B\": \"...\", \"C\": \"...\", \"D\": \"...\"},\n" +
+               "    \"dogruCevap\": \"A\",\n" +
+               "    \"cozum\": \"Çözüm açıklaması...\"\n" +
+               "  }\n" +
+               "]";
+
+  var payload = {
+    "contents": [{"parts": [{"text": prompt}]}],
+    "generationConfig": {"temperature": 0.7}
+  };
+
+  var options = {
+    "method": "post",
+    "contentType": "application/json",
+    "payload": JSON.stringify(payload),
+    "muteHttpExceptions": true
+  };
+
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var json = JSON.parse(response.getContentText());
+
+    if (json.error) {
+      return { error: "Gemini API Hatası: " + json.error.message };
+    }
+
+    var rawText = json.candidates[0].content.parts[0].text;
+    var cleanJsonText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+    
+    return JSON.parse(cleanJsonText);
+  } catch (e) {
+    return { error: "Soru üretilirken hata oluştu: " + e.toString() };
+  }
+}
 </script>
 
 </body>
