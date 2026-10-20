@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yapay Zeka Soru Üretici</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .api-box { background: #eef6ff; border: 1px solid #b8daff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; color: #34495e; }
+        input, select, button { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        button { background-color: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { background-color: #219150; }
+        .btn-api { background-color: #3498db; }
+        .btn-api:hover { background-color: #2980b9; }
+        .spinner { display: none; text-align: center; margin: 20px 0; font-weight: bold; color: #2980b9; }
+        .soru-kart { background: #fdfdfd; border: 1px solid #e2e8f0; border-left: 5px solid #3498db; padding: 15px; border-radius: 6px; margin-top: 20px; }
+        .siklar { margin-top: 10px; }
+        .sik { padding: 8px; background: #edf2f7; margin-bottom: 5px; border-radius: 4px; }
+        .dogru { background: #d4edda; color: #155724; font-weight: bold; padding: 8px; border-radius: 4px; margin-top: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🤖 Yapay Zeka Soru Üretici</h2>
+
+    <!-- API Key Tanımlama Kutusu -->
+    <div class="api-box">
+        <label for="userApiKey">🔑 Gemini API Anahtarınız:</label>
+        <input type="password" id="userApiKey" placeholder="AI Studio'dan aldığınız AIzaSy... kodunu girin">
+        <button class="btn-api" onclick="apiKeyKaydet()">API Key'i Profilime Kaydet</button>
+        <small style="display:block; margin-top:5px; color:#555;">* Ücretsiz API Key almak için: <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a></small>
+    </div>
+
+    <!-- Soru Üretme Formu -->
+    <div class="form-group">
+        <label for="ders">Ders Seçin:</label>
+        <select id="ders">
+            <option value="Matematik">Matematik</option>
+            <option value="Fen Bilimleri">Fen Bilimleri</option>
+            <option value="Türkçe">Türkçe</option>
+            <option value="Sosyal Bilgiler / İnkılap Tarihi">Sosyal Bilgiler</option>
+            <option value="İngilizce">İngilizce</option>
+            <option value="Din Kültürü">Din Kültürü</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="konu">Konu Başlığı:</label>
+        <input type="text" id="konu" placeholder="Örn: Üslü İfadeler veya Paragrafta Anlam">
+    </div>
+
+    <div class="form-group">
+        <label for="soruSayisi">Soru Sayısı:</label>
+        <select id="soruSayisi">
+            <option value="1">1 Soru</option>
+            <option value="3" selected>3 Soru</option>
+            <option value="5">5 Soru</option>
+        </select>
+    </div>
+
+    <button onclick="soruUret()">✨ Soruları Üret</button>
+
+    <div id="loading" class="spinner">⏳ Yapay zeka MEB/Maarif modeline uygun sorular üretiyor, lütfen bekleyin...</div>
+
+    <div id="soruAlani"></div>
+</div>
+
+<script>
+    // Buraya Google Apps Script Web App URL'nizi yapıştırın
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz5lywvbbFDT8gqgh9BB_cfijd1Y8c5vp74dqs428LELX0Sp0GAH9zvvYZ2DKIk-OU/exec";
+
+    // Giriş yapmış öğrenci numarasını hafızadan/oturumdan alıyoruz
+    const ogrNo = localStorage.getItem("ogrNo") || sessionStorage.getItem("ogrNo") || "TEST_OGRENCI";
+
+    function apiKeyKaydet() {
+        const apiKey = document.getElementById("userApiKey").value.trim();
+        if (!apiKey) {
+            alert("Lütfen geçerli bir API Key girin!");
+            return;
+        }
+
+        fetch(`${SCRIPT_URL}?action=apiKeyKaydet&ogrNo=${encodeURIComponent(ogrNo)}&apiKey=${encodeURIComponent(apiKey)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("API Anahtarınız başarıyla Google Sheets sistemine kaydedildi!");
+            } else {
+                alert("Hata: " + data.error);
+            }
+        })
+        .catch(err => alert("Bağlantı hatası oluştu!"));
+    }
+
+    function soruUret() {
+        const ders = document.getElementById("ders").value;
+        const konu = document.getElementById("konu").value.trim();
+        const soruSayisi = document.getElementById("soruSayisi").value;
+        const soruAlani = document.getElementById("soruAlani");
+        const loading = document.getElementById("loading");
+
+        if (!konu) {
+            alert("Lütfen bir konu başlığı girin!");
+            return;
+        }
+
+        soruAlani.innerHTML = "";
+        loading.style.display = "block";
+
+        fetch(`${SCRIPT_URL}?action=soruUret&ogrNo=${encodeURIComponent(ogrNo)}&ders=${encodeURIComponent(ders)}&konu=${encodeURIComponent(konu)}&soruSayisi=${soruSayisi}`)
+        .then(res => res.json())
+        .then(data => {
+            loading.style.display = "none";
+            if (data.error === "API_KEY_YOK") {
+                alert(data.message);
+                document.getElementById("userApiKey").focus();
+                return;
+            }
+            if (data.error) {
+                alert("Hata: " + data.error);
+                return;
+            }
+
+            data.forEach((item, index) => {
+                let html = `
+                    <div class="soru-kart">
+                        <strong>Soru ${index + 1}:</strong> ${item.soruMetni}
+                        <div class="siklar">
+                            <div class="sik"><b>A)</b> ${item.siklar.A}</div>
+                            <div class="sik"><b>B)</b> ${item.siklar.B}</div>
+                            <div class="siklar">
+                            <div class="sik"><b>C)</b> ${item.siklar.C}</div>
+                            <div class="sik"><b>D)</b> ${item.siklar.D}</div>
+                        </div>
+                        <div class="dogru">✅ Doğru Cevap: ${item.dogruCevap}</div>
+                        <small style="color: #666;"><b>Çözüm:</b> ${item.cozum}</small>
+                    </div>
+                `;
+                soruAlani.innerHTML += html;
+            });
+        })
+        .catch(err => {
+            loading.style.display = "none";
+            alert("Bir bağlantı hatası oluştu!");
+            console.error(err);
+        });
+    }
+</script>
+
+</body>
+</html>

@@ -33,7 +33,10 @@
 <div class="card">
   <div class="top-bar">
     <span id="userInfo" style="font-weight: bold; color: #2c3e50;">Yükleniyor...</span>
-    <button class="logout-btn" onclick="cikisYap()">Çıkış Yap</button>
+    <div>
+      <button onclick="window.location.href='soruUret.html'" style="background-color: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 5px;">🤖 Soru Üret</button>
+      <button class="logout-btn" onclick="cikisYap()">Çıkış Yap</button>
+    </div>
   </div>
 
   <h2>5-F Günlük Takip Formu</h2>
@@ -141,7 +144,7 @@
 
 <script>
   // BURAYA APPS SCRIPT WEB APP URL'NİZİ YAPIŞTIRIN:
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwqPYdaV7GqLJKTl-mTS8OjopUMpHBrpWfB4ED275aoQKEAc0qgpsUFfHgWpC8p0iU/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz5lywvbbFDT8gqgh9BB_cfijd1Y8c5vp74dqs428LELX0Sp0GAH9zvvYZ2DKIk-OU/exec";
 
   const aktifNo = sessionStorage.getItem("girisYapanNo");
   const aktifAd = sessionStorage.getItem("girisYapanAd");
