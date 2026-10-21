@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öğrenci Hesap Oluşturma</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .grid-sinif-sube {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+        }
+        button {
+            width: 100%;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+            color: #007bff;
+            font-size: 14px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎓 Öğrenci Hesap Oluşturma</h2>
+    
+    <div class="form-group">
+        <label for="ogrNo">Öğrenci Numarası</label>
+        <input type="text" id="ogrNo" placeholder="Okul numaranızı girin">
+    </div>
+
+    <div class="form-group">
+        <label for="sifre">Şifre</label>
+        <input type="password" id="sifre" placeholder="Giriş şifrenizi belirleyin">
+    </div>
+
+    <div class="form-group">
+        <label for="adSoyad">Ad Soyad</label>
+        <input type="text" id="adSoyad" placeholder="Adınızı ve soyadınızı girin">
+    </div>
+
+    <div class="form-group">
+        <label>Sınıf ve Şube</label>
+        <div class="grid-sinif-sube">
+            <select id="sinif">
+                <option value="">Sınıf Seç</option>
+                <option value="5">5. Sınıf</option>
+                <option value="6">6. Sınıf</option>
+                <option value="7">7. Sınıf</option>
+                <option value="8">8. Sınıf</option>
+                <option value="9">9. Sınıf</option>
+                <option value="10">10. Sınıf</option>
+                <option value="11">11. Sınıf</option>
+                <option value="12">12. Sınıf</option>
+                <option value="Mezun">Lise Mezunu</option>
+            </select>
+            <input type="text" id="sube" placeholder="Şube (örn: F)">
+        </div>
+    </div>
+
+    <button onclick="hesapOlustur()">🚀 Hesap Oluştur</button>
+    <div id="loading">⏳ Hesap oluşturuluyor, lütfen bekleyin...</div>
+</div>
+
+<script>
+    // Google Apps Script Web App URL'niz
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWvH9F5Fo608nAe9bPdAOoiVhGnNQUzpJ1jf1DXqBex9ksdfsmRp4ORNZeWTdo4L8/exec";
+
+    function hesapOlustur() {
+        const ogrNo = document.getElementById("ogrNo").value.trim();
+        const sifre = document.getElementById("sifre").value.trim();
+        const adSoyad = document.getElementById("adSoyad").value.trim();
+        const sinif = document.getElementById("sinif").value;
+        const sube = document.getElementById("sube").value.trim().toUpperCase();
+        const loading = document.getElementById("loading");
+
+        if (!ogrNo || !sifre || !adSoyad || !sinif) {
+            alert("Lütfen öğrenci numarası, şifre, ad soyad ve sınıf alanlarını doldurun!");
+            return;
+        }
+
+        loading.style.display = "block";
+
+        fetch(`${SCRIPT_URL}?action=kayitOl&ogrNo=${encodeURIComponent(ogrNo)}&sifre=${encodeURIComponent(sifre)}&adSoyad=${encodeURIComponent(adSoyad)}&sinif=${encodeURIComponent(sinif)}&sube=${encodeURIComponent(sube)}`)
+        .then(res => res.text())
+        .then(text => {
+            loading.style.display = "none";
+            try {
+                const data = JSON.parse(text);
+                if (data.error) {
+                    alert("Hata: " + data.error);
+                } else {
+                   // alert("🎉 Hesap başarıyla oluşturuldu! Şimdi giriş yapabilirsiniz.");
+                    window.location.href = "indexLogin.html";
+                }
+            } catch (e) {
+                alert("Sunucudan yanıt alınamadı: " + text);
+            }
+        })
+        .catch(err => {
+            loading.style.display = "none";
+            alert("Bağlantı Hatası: " + err);
+        });
+    }
+</script>
+
+</body>
+</html>

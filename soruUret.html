@@ -8,6 +8,9 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
         .container { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .back-btn { background-color: #7f8c8d; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: auto; }
+        .back-btn:hover { background-color: #626567; }
         .api-box { background: #eef6ff; border: 1px solid #b8daff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
         label { font-weight: bold; display: block; margin-bottom: 5px; color: #34495e; }
@@ -26,6 +29,11 @@
 <body>
 
 <div class="container">
+    <div class="top-bar">
+        <span id="userInfo" style="font-weight: bold; color: #2c3e50;">Soru Üretici Panel</span>
+        <button class="back-btn" onclick="window.location.href='index.html'">⬅ Ana Sayfaya Dön</button>
+    </div>
+
     <h2>🤖 Yapay Zeka Soru Üretici</h2>
 
     <!-- API Key Tanımlama Kutusu -->
@@ -43,7 +51,7 @@
             <option value="Matematik">Matematik</option>
             <option value="Fen Bilimleri">Fen Bilimleri</option>
             <option value="Türkçe">Türkçe</option>
-            <option value="Sosyal Bilgiler / İnkılap Tarihi">Sosyal Bilgiler</option>
+            <option value="Sosyal Bilgiler">Sosyal Bilgiler</option>
             <option value="İngilizce">İngilizce</option>
             <option value="Din Kültürü">Din Kültürü</option>
         </select>
@@ -71,13 +79,16 @@
 </div>
 
 <script>
-    // Buraya Google Apps Script Web App URL'nizi yapıştırın
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz5lywvbbFDT8gqgh9BB_cfijd1Y8c5vp74dqs428LELX0Sp0GAH9zvvYZ2DKIk-OU/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWvH9F5Fo608nAe9bPdAOoiVhGnNQUzpJ1jf1DXqBex9ksdfsmRp4ORNZeWTdo4L8/exec";
 
-    // Giriş yapmış öğrenci numarasını hafızadan/oturumdan alıyoruz
-    const ogrNo = localStorage.getItem("ogrNo") || sessionStorage.getItem("ogrNo") || "TEST_OGRENCI";
+    const ogrNo = sessionStorage.getItem("girisYapanNo") || localStorage.getItem("ogrNo") || "TEST_OGRENCI";
+    const adSoyad = sessionStorage.getItem("girisYapanAd") || localStorage.getItem("adSoyad");
 
-function apiKeyKaydet() {
+    if (adSoyad && ogrNo !== "TEST_OGRENCI") {
+        document.getElementById("userInfo").innerText = `Öğrenci: ${adSoyad} (${ogrNo})`;
+    }
+
+    function apiKeyKaydet() {
         const apiKey = document.getElementById("userApiKey").value.trim();
         if (!apiKey) {
             alert("Lütfen geçerli bir API Key girin!");
@@ -89,6 +100,7 @@ function apiKeyKaydet() {
         .then(data => {
             if (data.success) {
                 alert("API Anahtarınız başarıyla Google Sheets sistemine kaydedildi!");
+                document.getElementById("userApiKey").value = "";
             } else {
                 alert("Google Sheets Hatası: " + (data.error || data.message || "Bilinmeyen hata"));
             }
@@ -135,12 +147,11 @@ function apiKeyKaydet() {
                         <div class="siklar">
                             <div class="sik"><b>A)</b> ${item.siklar.A}</div>
                             <div class="sik"><b>B)</b> ${item.siklar.B}</div>
-                            <div class="siklar">
                             <div class="sik"><b>C)</b> ${item.siklar.C}</div>
                             <div class="sik"><b>D)</b> ${item.siklar.D}</div>
                         </div>
                         <div class="dogru">✅ Doğru Cevap: ${item.dogruCevap}</div>
-                        <small style="color: #666;"><b>Çözüm:</b> ${item.cozum}</small>
+                        <small style="color: #666; display:block; margin-top:5px;"><b>Çözüm:</b> ${item.cozum}</small>
                     </div>
                 `;
                 soruAlani.innerHTML += html;
@@ -152,77 +163,6 @@ function apiKeyKaydet() {
             console.error(err);
         });
     }
-
-function geminiSoruUretOgr(ogrNo, ders, konu, soruSayisi) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("geminiApıKey") || ss.getSheetByName("GeminiApiKey");
-  
-  if (!sheet) {
-    return { error: "'geminiApıKey' sayfası bulunamadı!" };
-  }
-
-  var data = sheet.getDataRange().getValues();
-  var userApiKey = "";
-
-  for (var i = 1; i < data.length; i++) {
-    var dbNo = String(data[i][0]).replace(/\.0$/, "").trim();
-    if (dbNo === String(ogrNo).trim()) {
-      userApiKey = data[i][1];
-      break;
-    }
-  }
-
-  if (!userApiKey) {
-    return { error: "API_KEY_YOK", message: "Soru üretebilmek için önce profilinize Gemini API Key eklemelisiniz!" };
-  }
-
-  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + userApiKey;
-  
-  var prompt = "Sen MEB müfredatına uygun soru hazırlayan bir öğretmensin.\n" +
-               "Ders: " + ders + "\n" +
-               "Konu: " + konu + "\n" +
-               "Soru Sayısı: " + soruSayisi + "\n\n" +
-               "MEB/LGS tarzında " + soruSayisi + " adet çoktan seçmeli soru hazırla.\n" +
-               "Cevap olarak SADECE geçerli bir JSON dizisi döndür. Başka hiçbir metin yazma.\n\n" +
-               "JSON Formatı:\n" +
-               "[\n" +
-               "  {\n" +
-               "    \"soruNo\": 1,\n" +
-               "    \"soruMetni\": \"Soru metni...\",\n" +
-               "    \"siklar\": {\"A\": \"...\", \"B\": \"...\", \"C\": \"...\", \"D\": \"...\"},\n" +
-               "    \"dogruCevap\": \"A\",\n" +
-               "    \"cozum\": \"Çözüm açıklaması...\"\n" +
-               "  }\n" +
-               "]";
-
-  var payload = {
-    "contents": [{"parts": [{"text": prompt}]}],
-    "generationConfig": {"temperature": 0.7}
-  };
-
-  var options = {
-    "method": "post",
-    "contentType": "application/json",
-    "payload": JSON.stringify(payload),
-    "muteHttpExceptions": true
-  };
-
-  try {
-    var response = UrlFetchApp.fetch(url, options);
-    var json = JSON.parse(response.getContentText());
-
-    if (json.error) {
-      return { error: "Gemini API Hatası: " + json.error.message };
-    }
-
-    var rawText = json.candidates[0].content.parts[0].text;
-    var cleanJsonText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-    
-    return JSON.parse(cleanJsonText);
-  } catch (e) {
-    return { error: "Soru üretilirken hata oluştu: " + e.toString() };
-  }
-}
 </script>
 
 </body>
