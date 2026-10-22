@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öğretmen Giriş Paneli</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { max-width: 400px; width: 100%; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; color: #34495e; font-size: 14px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        input:focus { border-color: #3498db; outline: none; }
+        button { width: 100%; padding: 12px; background-color: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 16px; transition: 0.3s; margin-top: 10px; }
+        button:hover { background-color: #2980b9; }
+        .register-link { text-align: center; margin-top: 15px; font-size: 14px; }
+        .register-link a { color: #27ae60; text-decoration: none; font-weight: bold; }
+        .register-link a:hover { text-decoration: underline; }
+        .spinner { display: none; text-align: center; margin: 15px 0; font-weight: bold; color: #2980b9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🔐 Öğretmen Girişi</h2>
+
+    <div class="form-group">
+        <label for="eposta">E-Posta Adresi:</label>
+        <input type="email" id="eposta" placeholder="ornek@mail.com" required>
+    </div>
+
+    <div class="form-group">
+        <label for="sifre">Şifre:</label>
+        <input type="password" id="sifre" placeholder="Şifreniz" required>
+    </div>
+
+    <button onclick="ogretmenGirisYap()">Giriş Yap</button>
+
+    <div id="loading" class="spinner">⏳ Giriş yapılıyor, lütfen bekleyin...</div>
+
+    <div class="register-link">
+        Hesabınız yok mi? <a href="ogretmenKayit.html">Kayıt Ol</a>
+    </div>
+</div>
+
+<script>
+    // Google Apps Script Web App URL'nizi buraya yazın
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNBauXzfZvefxpCvYp_A0A0901gexKl7h7TuxEuVqqHBYvdyo8Dy6TQdf86cexiTk/exec";
+
+    function ogretmenGirisYap() {
+        const eposta = document.getElementById("eposta").value.trim();
+        const sifre = document.getElementById("sifre").value.trim();
+        const loading = document.getElementById("loading");
+
+        if (!eposta || !sifre) {
+            alert("Lütfen e-posta ve şifrenizi girin!");
+            return;
+        }
+
+        loading.style.display = "block";
+
+        const url = `${SCRIPT_URL}?action=ogretmenGiris&eposta=${encodeURIComponent(eposta)}&sifre=${encodeURIComponent(sifre)}`;
+
+        fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            loading.style.display = "none";
+            if (data.success) {
+                // Öğretmen bilgilerini oturumda sakla
+                sessionStorage.setItem("ogretmenEmail", data.eposta);
+                sessionStorage.setItem("ogretmenAdSoyad", data.adSoyad);
+                
+                alert("Giriş başarılı! Panele yönlendiriliyorsunuz.");
+                window.location.href = "ogretmenPanel.html"; // İleride oluşturacağımız panel sayfası
+            } else {
+                alert("Giriş Hatası: " + (data.error || "Bilinmeyen bir hata oluştu."));
+            }
+        })
+        .catch(err => {
+            loading.style.display = "none";
+            alert("Bağlantı hatası oluştu: " + err);
+            console.error(err);
+        });
+    }
+</script>
+
+</body>
+</html>

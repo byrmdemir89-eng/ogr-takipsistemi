@@ -79,7 +79,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWvH9F5Fo608nAe9bPdAOoiVhGnNQUzpJ1jf1DXqBex9ksdfsmRp4ORNZeWTdo4L8/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNBauXzfZvefxpCvYp_A0A0901gexKl7h7TuxEuVqqHBYvdyo8Dy6TQdf86cexiTk/exec";
 
     const ogrNo = sessionStorage.getItem("girisYapanNo") || localStorage.getItem("ogrNo") || "TEST_OGRENCI";
     const adSoyad = sessionStorage.getItem("girisYapanAd") || localStorage.getItem("adSoyad");
@@ -109,7 +109,7 @@
             alert("Bağlantı/JSON Çözümleme Hatası: " + err);
             console.error(err);
         });
-    }    
+    }
 
     function soruUret() {
         const ders = document.getElementById("ders").value;
@@ -127,31 +127,43 @@
         loading.style.display = "block";
 
         fetch(`${SCRIPT_URL}?action=soruUret&ogrNo=${encodeURIComponent(ogrNo)}&ders=${encodeURIComponent(ders)}&konu=${encodeURIComponent(konu)}&soruSayisi=${soruSayisi}`)
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("Ağ yanıtı uygun değil: " + res.statusText);
+            }
+            return res.json();
+        })
         .then(data => {
             loading.style.display = "none";
-            if (data.error === "API_KEY_YOK") {
-                alert(data.message);
-                document.getElementById("userApiKey").focus();
-                return;
-            }
-            if (data.error) {
-                alert("Hata: " + data.error);
+
+            // Eğer sunucudan dizi yerine obje/hata döndüyse:
+            if (!Array.isArray(data)) {
+                if (data.error === "API_KEY_YOK") {
+                    alert(data.message);
+                    document.getElementById("userApiKey").focus();
+                    return;
+                }
+                if (data.error) {
+                    alert("Hata: " + data.error);
+                    return;
+                }
+                alert("Beklenmeyen yanıt yapısı alındı.");
                 return;
             }
 
+            // Gelen veri başarıyla dizi olarak ayrıştırıldıysa soruları çizdir:
             data.forEach((item, index) => {
                 let html = `
                     <div class="soru-kart">
-                        <strong>Soru ${index + 1}:</strong> ${item.soruMetni}
+                        <strong>Soru ${index + 1}:</strong> ${item.soruMetni || ''}
                         <div class="siklar">
-                            <div class="sik"><b>A)</b> ${item.siklar.A}</div>
-                            <div class="sik"><b>B)</b> ${item.siklar.B}</div>
-                            <div class="sik"><b>C)</b> ${item.siklar.C}</div>
-                            <div class="sik"><b>D)</b> ${item.siklar.D}</div>
+                            <div class="sik"><b>A)</b> ${item.siklar ? item.siklar.A : ''}</div>
+                            <div class="sik"><b>B)</b> ${item.siklar ? item.siklar.B : ''}</div>
+                            <div class="sik"><b>C)</b> ${item.siklar ? item.siklar.C : ''}</div>
+                            <div class="sik"><b>D)</b> ${item.siklar ? item.siklar.D : ''}</div>
                         </div>
-                        <div class="dogru">✅ Doğru Cevap: ${item.dogruCevap}</div>
-                        <small style="color: #666; display:block; margin-top:5px;"><b>Çözüm:</b> ${item.cozum}</small>
+                        <div class="dogru">✅ Doğru Cevap: ${item.dogruCevap || ''}</div>
+                        <small style="color: #666; display:block; margin-top:5px;"><b>Çözüm:</b> ${item.cozum || ''}</small>
                     </div>
                 `;
                 soruAlani.innerHTML += html;
@@ -159,8 +171,8 @@
         })
         .catch(err => {
             loading.style.display = "none";
-            alert("Bir bağlantı hatası oluştu!");
-            console.error(err);
+            alert("Hata Oluştu: " + err.message);
+            console.error("Detaylı Hata:", err);
         });
     }
 </script>
