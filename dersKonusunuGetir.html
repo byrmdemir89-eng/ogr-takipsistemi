@@ -30,6 +30,9 @@
             <option value="Türkçe">Türkçe</option>
             <option value="Fen Bilimleri">Fen Bilimleri</option>
             <option value="Sosyal Bilgiler">Sosyal Bilgiler</option>
+            <option value="İngilizce">İngilizce</option>
+            <option value="Din Kültürü">Din Kültürü</option>
+            <option value="Paragraf">Paragraf</option>
         </select>
     </div>
 
@@ -44,7 +47,7 @@
 </div>
 
 <script>
-  const SCRIPT_URL = window.location.href.split('?')[0]; // Otomatik kendi web app adresini alır, CORS derdi biter!
+  const SCRIPT_URL = "[https://script.google.com/macros/s/AKfycbwWvH9F5Fo608nAe9bPdAOoiVhGnNQUzpJ1jf1DXqBex9ksdfsmRp4ORNZeWTdo4L8/exec](https://script.google.com/macros/s/AKfycbwWvH9F5Fo608nAe9bPdAOoiVhGnNQUzpJ1jf1DXqBex9ksdfsmRp4ORNZeWTdo4L8/exec)";
 
   function konuGetir() {
     const ders = document.getElementById('dersSecim').value;
@@ -60,7 +63,7 @@
     sonucDiv.style.display = "block";
     sonucDiv.innerHTML = "⏳ Seviyenize uygun anlatım ve örnekler hazırlanıyor, lütfen bekleyin...";
 
-    fetch(`${SCRIPT_URL}?action=dersKonusuUret&ogrNo=${ogrNo}&ders=${encodeURIComponent(ders)}&konu=${encodeURIComponent(konu)}`)
+    fetch(`${SCRIPT_URL}?action=dersKonusuUret&ogrNo=${encodeURIComponent(ogrNo)}&ders=${encodeURIComponent(ders)}&konu=${encodeURIComponent(konu)}`)
       .then(res => res.json())
       .then(data => {
         if(data.success) {
@@ -70,7 +73,7 @@
         }
       })
       .catch(err => {
-        sonucDiv.innerHTML = "❌ Bağlantı hatası oluştu.";
+        sonucDiv.innerHTML = "❌ Bağlantı hatası oluştu: " + err;
       });
   }
 </script>
