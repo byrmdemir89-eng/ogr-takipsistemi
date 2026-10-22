@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ders Konusu ve Çalışma Merkezi</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; margin: 0; padding: 20px; }
+        .card { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: 600; display: block; margin-bottom: 8px; color: #34495e; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        button { width: 100%; padding: 14px; background-color: #3498db; color: white; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #2980b9; }
+        #sonucAlani { margin-top: 25px; padding: 20px; background: #fafafa; border-left: 5px solid #3498db; border-radius: 6px; line-height: 1.6; }
+        .back-btn { background-color: #7f8c8d; margin-bottom: 15px; width: auto; padding: 8px 15px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <button class="back-btn" onclick="window.location.href='index.html'">⬅ Ana Sayfaya Dön</button>
+    <h2>📚 Akıllı Ders ve Konu Çalışma Asistanı</h2>
+    
+    <div class="form-group">
+        <label>Çalışmak İstediğin Ders:</label>
+        <select id="dersSecim">
+            <option value="Matematik">Matematik</option>
+            <option value="Türkçe">Türkçe</option>
+            <option value="Fen Bilimleri">Fen Bilimleri</option>
+            <option value="Sosyal Bilgiler">Sosyal Bilgiler</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Öğrenmek / Çalışmak İstediğin Konu:</label>
+        <input type="text" id="konuInput" placeholder="Örn: Kesirlerle toplama işlemi, Güneş Sistemi vb.">
+    </div>
+
+    <button onclick="konuGetir()">🚀 Konuyu ve Bol Örnekleri Getir</button>
+
+    <div id="sonucAlani" style="display:none;"></div>
+</div>
+
+<script>
+  const SCRIPT_URL = window.location.href.split('?')[0]; // Otomatik kendi web app adresini alır, CORS derdi biter!
+
+  function konuGetir() {
+    const ders = document.getElementById('dersSecim').value;
+    const konu = document.getElementById('konuInput').value;
+    const sonucDiv = document.getElementById('sonucAlani');
+    const ogrNo = sessionStorage.getItem("girisYapanNo") || localStorage.getItem("ogrNo") || "5";
+
+    if (!konu.trim()) {
+      alert("Lütfen çalışmak istediğiniz konuyu yazın!");
+      return;
+    }
+
+    sonucDiv.style.display = "block";
+    sonucDiv.innerHTML = "⏳ Seviyenize uygun anlatım ve örnekler hazırlanıyor, lütfen bekleyin...";
+
+    fetch(`${SCRIPT_URL}?action=dersKonusuUret&ogrNo=${ogrNo}&ders=${encodeURIComponent(ders)}&konu=${encodeURIComponent(konu)}`)
+      .then(res => res.json())
+      .then(data => {
+        if(data.success) {
+          sonucDiv.innerHTML = `<h3>📖 ${ders} - ${konu}</h3><div>${data.icerik}</div>`;
+        } else {
+          sonucDiv.innerHTML = "❌ İçerik oluşturulamadı: " + (data.message || "Bilinmeyen hata");
+        }
+      })
+      .catch(err => {
+        sonucDiv.innerHTML = "❌ Bağlantı hatası oluştu.";
+      });
+  }
+</script>
+
+</body>
+</html>
