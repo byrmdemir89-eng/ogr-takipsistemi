@@ -62,10 +62,13 @@
         <input type="text" id="konu" placeholder="Örn: Üslü İfadeler veya Paragrafta Anlam">
     </div>
 
-    <!-- ELLE SAYI GİRİLEN YENİ SORU SAYISI ALANI -->
     <div class="form-group">
-        <label for="soruSayisi">Soru Sayısı Girin (1 - 10 arası):</label>
-        <input type="number" id="soruSayisi" min="1" max="10" value="3" placeholder="Örn: 5">
+        <label for="soruSayisi">Soru Sayısı:</label>
+        <select id="soruSayisi">
+            <option value="1">1 Soru</option>
+            <option value="3" selected>3 Soru</option>
+            <option value="5">5 Soru</option>
+        </select>
     </div>
 
     <button onclick="soruUret()">✨ Soruları Üret</button>
@@ -111,25 +114,13 @@
     function soruUret() {
         const ders = document.getElementById("ders").value;
         const konu = document.getElementById("konu").value.trim();
-        let soruSayisi = parseInt(document.getElementById("soruSayisi").value, 10);
+        const soruSayisi = document.getElementById("soruSayisi").value;
         const soruAlani = document.getElementById("soruAlani");
         const loading = document.getElementById("loading");
 
         if (!konu) {
             alert("Lütfen bir konu başlığı girin!");
             return;
-        }
-
-        // Soru sayısı doğrulama ve sınırlandırma
-        if (isNaN(soruSayisi) || soruSayisi < 1) {
-            alert("Lütfen geçerli bir soru sayısı girin (En az 1)!");
-            return;
-        }
-
-        if (soruSayisi > 10) {
-            alert("Tek seferde en fazla 10 soru üretebilirsiniz. Sayı 10 olarak ayarlandı.");
-            soruSayisi = 10;
-            document.getElementById("soruSayisi").value = 10;
         }
 
         soruAlani.innerHTML = "";
@@ -169,7 +160,7 @@
                             <div class="sik"><b>A)</b> ${item.siklar ? item.siklar.A : ''}</div>
                             <div class="sik"><b>B)</b> ${item.siklar ? item.siklar.B : ''}</div>
                             <div class="sik"><b>C)</b> ${item.siklar ? item.siklar.C : ''}</div>
-                            <div class="sik Macedonia"><b>D)</b> ${item.siklar ? item.siklar.D : ''}</div>
+                            <div class="sik"><b>D)</b> ${item.siklar ? item.siklar.D : ''}</div>
                         </div>
                         <div class="dogru">✅ Doğru Cevap: ${item.dogruCevap || ''}</div>
                         <small style="color: #666; display:block; margin-top:5px;"><b>Çözüm:</b> ${item.cozum || ''}</small>

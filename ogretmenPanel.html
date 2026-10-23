@@ -66,6 +66,15 @@
         .card h3 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 14px; }
         .card .number { font-size: 24px; font-weight: bold; color: var(--primary); margin: 0; }
 
+        /* Gelişmiş Özel Öğrenci Seçim Alanı Stilleri */
+        .selected-students-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; min-height: 38px; padding: 5px; border: 1px dashed #cbd5e1; border-radius: 6px; background-color: #f8fafc; }
+        .student-chip { background-color: var(--secondary); color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
+        .student-chip .remove-chip { cursor: pointer; font-weight: bold; background: rgba(0,0,0,0.2); border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+        .student-chip .remove-chip:hover { background: var(--danger); }
+        .student-search-results { max-height: 180px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px; background: white; margin-top: 5px; display: none; }
+        .student-search-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 14px; transition: background 0.2s; }
+        .student-search-item:hover { background-color: #e2e8f0; }
+
         /* Mobil Ekran Uyumları (Responsive / Media Queries) */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
@@ -197,14 +206,17 @@
                     </div>
                 </div>
 
-                <!-- ÖZEL ÖĞRENCİ SEÇİM ALANI (Başlangıçta gizli) -->
+                <!-- ÖZEL ÖĞRENCİ ARAMA VE EKLEME ALANI (Yeni İnteraktif Modül) -->
                 <div id="ogrenciSecimAlani" style="display: none;">
                     <div class="form-group">
-                        <label>Öğrenci Seçin (Ad - No - Sınıf):</label>
-                        <select id="hedefOgrNoSelect">
-                            <option value="">Önce atama türünü değiştirin veya yükleniyor...</option>
-                        </select>
-                        <small style="color: #7f8c8d;">Listeden dilediğiniz öğrenciyi seçebilirsiniz.</small>
+                        <label>Özel Atanacak Öğrenciler:</label>
+                        <div id="selectedStudentsChips" class="selected-students-container">
+                            <span style="color: #94a3b8; font-size: 13px; align-self: center;" id="emptyChipsText">Henüz öğrenci seçilmedi. Aşağıdan arayıp ekleyin.</span>
+                        </div>
+                        
+                        <label for="studentSearchInput">Öğrenci Ara (İsim veya Numaraya Göre):</label>
+                        <input type="text" id="studentSearchInput" placeholder="Örn: Ahmet veya 1045 yazın..." oninput="filterStudentsList()" onfocus="filterStudentsList()">
+                        <div id="studentSearchResults" class="student-search-results"></div>
                     </div>
                 </div>
 
@@ -279,6 +291,10 @@
     const aktifOgretmenEmail = sessionStorage.getItem("ogretmenEmail");
     let ogretmenSinif = "";
     let ogretmenSube = "";
+
+    // Tüm çekilen öğrenciler ve seçilen öğrencilerin listesi
+    let tumOgrencilerHafiza = [];
+    let seciliOgrencilerListesi = [];
 
     if (!aktifOgretmenEmail) {
         alert("Lütfen önce öğretmen olarak giriş yapın!");
@@ -461,35 +477,103 @@
         } else {
             document.getElementById("sinifSecimAlani").style.display = "none";
             document.getElementById("ogrenciSecimAlani").style.display = "block";
-            tumOgrencileriYukleSelect(); // Tüm öğrencileri çek
+            tumOgrencileriHafizayaAl(); // Tüm öğrencileri çek
         }
     }
 
-    // Tüm öğrencileri çekip öğrenci seçim kutusunu doldurur
-    function tumOgrencileriYukleSelect() {
-        const selectBox = document.getElementById("hedefOgrNoSelect");
-        selectBox.innerHTML = `<option value="">Öğrenciler yükleniyor...</option>`;
+    // Tüm öğrencileri sunucudan çekip hafızaya saklar
+    function tumOgrencileriHafizayaAl() {
+        if (tumOgrencilerHafiza.length > 0) return;
 
-        fetch(`${SCRIPT_URL}?action=tumOgrencileriGetir`)
+        fetch(`${SCRIPT_URL}?action=tumOgrencileriGetir&t=${Date.now()}`)
         .then(res => res.json())
         .then(data => {
-            if (data.success && data.ogrenciler && data.ogrenciler.length > 0) {
-                let html = `<option value="">-- Öğrenci Seçiniz --</option>`;
-                data.ogrenciler.forEach(ogr => {
-                    html += `<option value="${ogr.ogrNo}">${ogr.adSoyad} (${ogr.sinif}-${ogr.sube} - No: ${ogr.ogrNo})</option>`;
-                });
-                selectBox.innerHTML = html;
-            } else {
-                selectBox.innerHTML = `<option value="">Kayıtlı öğrenci bulunamadı</option>`;
+            if (data.success && data.ogrenciler) {
+                tumOgrencilerHafiza = data.ogrenciler;
             }
         })
-        .catch(err => {
-            console.error("Öğrenci yükleme hatası:", err);
-            selectBox.innerHTML = `<option value="">Öğrenciler yüklenemedi</option>`;
-        });
+        .catch(err => console.error("Öğrenci çekme hatası:", err));
     }
 
-    // Yeni esnek ödev atama fonksiyonu
+    // Arama Kutusunda Yazdıkça Çalışan Canlı Filtreleme
+    function filterStudentsList() {
+        const query = document.getElementById("studentSearchInput").value.trim().toLowerCase();
+        const resultsContainer = document.getElementById("studentSearchResults");
+
+        if (query.length === 0) {
+            resultsContainer.style.display = "none";
+            resultsContainer.innerHTML = "";
+            return;
+        }
+
+        // Seçilmemiş ve aramaya uyan öğrencileri filtrele
+        const eşleşenler = tumOgrencilerHafiza.filter(ogr => {
+            const zatenSecili = seciliOgrencilerListesi.some(s => s.ogrNo === ogr.ogrNo);
+            const metin = `${ogr.adSoyad} ${ogr.ogrNo} ${ogr.sinif} ${ogr.sube}`.toLowerCase();
+            return !zatenSecili && metin.includes(query);
+        });
+
+        if (eşleşenler.length > 0) {
+            let html = "";
+            eşleşenler.forEach(ogr => {
+                html += `<div class="student-search-item" onclick="studentChipEkle('${ogr.ogrNo}', '${ogr.adSoyad.replace(/'/g, "\\'")}', '${ogr.sinif}', '${ogr.sube}')">
+                    ➕ <b>${ogr.adSoyad}</b> (No: ${ogr.ogrNo}) - ${ogr.sinif}/${ogr.sube}
+                </div>`;
+            });
+            resultsContainer.innerHTML = html;
+            resultsContainer.style.display = "block";
+        } else {
+            resultsContainer.innerHTML = `<div class="student-search-item" style="color:#94a3b8; cursor:default;">Eşleşen öğrenci bulunamadı</div>`;
+            resultsContainer.style.display = "block";
+        }
+    }
+
+    // Tıklanan Öğrenciyi Üst Alana Etiket Olarak Ekle
+    function studentChipEkle(ogrNo, adSoyad, sinif, sube) {
+        seciliOgrencilerListesi.push({ ogrNo, adSoyad, sinif, sube });
+        
+        // Arama kutusunu ve sonuç alanını temizle
+        document.getElementById("studentSearchInput").value = "";
+        document.getElementById("studentSearchResults").style.display = "none";
+        
+        renderSelectedChips();
+    }
+
+    // Seçilen Öğrenciyi Listeden Çıkar
+    function studentChipCikar(ogrNo) {
+        seciliOgrencilerListesi = seciliOgrencilerListesi.filter(s => s.ogrNo !== ogrNo);
+        renderSelectedChips();
+    }
+
+    // Üstteki Etiketleri (Chips) Ekrana Çiz
+    function renderSelectedChips() {
+        const container = document.getElementById("selectedStudentsChips");
+        
+        if (seciliOgrencilerListesi.length === 0) {
+            container.innerHTML = `<span style="color: #94a3b8; font-size: 13px; align-self: center;" id="emptyChipsText">Henüz öğrenci seçilmedi. Aşağıdan arayıp ekleyin.</span>`;
+            return;
+        }
+
+        let html = "";
+        seciliOgrencilerListesi.forEach(ogr => {
+            html += `<div class="student-chip">
+                <span>${ogr.adSoyad} (${ogr.ogrNo})</span>
+                <span class="remove-chip" onclick="studentChipCikar('${ogr.ogrNo}')">✕</span>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // Tıklama dışı bir yere tıklandığında arama sonuçlarını gizle
+    document.addEventListener("click", function(e) {
+        const searchInput = document.getElementById("studentSearchInput");
+        const resultsContainer = document.getElementById("studentSearchResults");
+        if (searchInput && resultsContainer && !searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.style.display = "none";
+        }
+    });
+
+    // Esnek ve Çoklu Seçim Destekli Ödev Atama Fonksiyonu
     function kazanimOdevAtaYeni() {
         const atamaTuru = document.getElementById("atamaTuru").value;
         const ders = document.getElementById("odevDers").value.trim();
@@ -501,111 +585,59 @@
             return;
         }
 
-        let hedefSinif = "Tumu";
-        let hedefSube = "Tumu";
-        let hedefOgrNo = "Tumu";
-
         if (atamaTuru === "sinif") {
-            hedefSinif = document.getElementById("hedefSinifSeviye").value || "Tumu";
-            hedefSube = document.getElementById("hedefSubeInput").value.trim() || "Tumu";
-        } else {
-            hedefOgrNo = document.getElementById("hedefOgrNoSelect").value;
-            if (!hedefOgrNo) {
-                alert("Lütfen bir öğrenci seçin!");
+            let hedefSinif = document.getElementById("hedefSinifSeviye").value || "Tumu";
+            let hedefSube = document.getElementById("hedefSubeInput").value.trim() || "Tumu";
+
+            const url = `${SCRIPT_URL}?action=odevAta&email=${encodeURIComponent(aktifOgretmenEmail)}&tur=${atamaTuru}&sinif=${encodeURIComponent(hedefSinif)}&sube=${encodeURIComponent(hedefSube)}&ogrNo=Tumu&ders=${encodeURIComponent(ders)}&konu=${encodeURIComponent(konu)}&tarih=${encodeURIComponent(tarih)}`;
+
+            fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Ödev başarıyla sınıfa atandı!");
+                    document.getElementById("odevDers").value = "";
+                    document.getElementById("odevKonu").value = "";
+                } else {
+                    alert("Ödev atama hatası: " + data.error);
+                }
+            })
+            .catch(err => alert("Bağlantı hatası: " + err));
+
+        } else { // Özel Öğrenci Seçimi (Çoklu Etiket Destekli)
+            if (seciliOgrencilerListesi.length === 0) {
+                alert("Lütfen en az bir öğrenci seçiniz!");
                 return;
             }
+
+            let basariliSayisi = 0;
+            let toplam = seciliOgrencilerListesi.length;
+
+            seciliOgrencilerListesi.forEach(ogr => {
+                const url = `${SCRIPT_URL}?action=odevAta&email=${encodeURIComponent(aktifOgretmenEmail)}&tur=ogrenci&sinif=%C3%96zel&sube=%C3%96zel&ogrNo=${encodeURIComponent(ogr.ogrNo)}&ders=${encodeURIComponent(ders)}&konu=${encodeURIComponent(konu)}&tarih=${encodeURIComponent(tarih)}`;
+
+                fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        basariliSayisi++;
+                        if (basariliSayisi === toplam) {
+                            alert(`${toplam} öğrenciye ödev başarıyla atandı!`);
+                            document.getElementById("odevDers").value = "";
+                            document.getElementById("odevKonu").value = "";
+                            seciliOgrencilerListesi = [];
+                            renderSelectedChips();
+                        }
+                    }
+                });
+            });
         }
-
-        const url = `${SCRIPT_URL}?action=odevAta&email=${encodeURIComponent(aktifOgretmenEmail)}&tur=${atamaTuru}&sinif=${encodeURIComponent(hedefSinif)}&sube=${encodeURIComponent(hedefSube)}&ogrNo=${encodeURIComponent(hedefOgrNo)}&ders=${encodeURIComponent(ders)}&konu=${encodeURIComponent(konu)}&tarih=${encodeURIComponent(tarih)}`;
-
-        fetch(url)
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                alert("Ödev başarıyla hedef kitleye atandı!");
-                document.getElementById("odevDers").value = "";
-                document.getElementById("odevKonu").value = "";
-            } else {
-                alert("Ödev atama hatası: " + data.error);
-            }
-        })
-        .catch(err => alert("Bağlantı hatası: " + err));
     }
    
     function cikisYap() {
         sessionStorage.clear();
         window.location.href = "ogretmenGiris.html";
     }
-// Tüm öğrencileri listele (Özel ödev atama için)
-function tumOgrencileriGetir(e) {
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName("siniflar");
-    if (!sheet) {
-      return ContentService.createTextOutput(JSON.stringify({ success: true, ogrenciler: [] })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    var data = sheet.getDataRange().getValues();
-    var ogrenciler = [];
-
-    for (var i = 1; i < data.length; i++) {
-      var ogrNo = String(data[i][0] || "").replace(/\.0$/, "").trim();
-      var adSoyad = String(data[i][2] || "").trim();
-      var sinif = String(data[i][3] || "").trim();
-      var sube = String(data[i][4] || "").trim();
-
-      if (ogrNo !== "") {
-        ogrenciler.push({
-          ogrNo: ogrNo,
-          adSoyad: adSoyad,
-          sinif: sinif,
-          sube: sube
-        });
-      }
-    }
-
-    return ContentService.createTextOutput(JSON.stringify({ success: true, ogrenciler: ogrenciler })).setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString(), ogrenciler: [] })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-// Ödevi Google Sheets 'odevler' sayfasına kaydet
-function odevAtaKaydet(e) {
-  try {
-    var params = e && e.parameter ? e.parameter : {};
-    var ogretmenEmail = String(params.email || "").trim();
-    var hedefTip = String(params.tur || "sinif").trim(); // sinif veya ogrenci
-    var hedefSinif = String(params.sinif || "Tumu").trim();
-    var hedefSube = String(params.sube || "Tumu").trim();
-    var hedefOgrNo = String(params.ogrNo || "Tumu").trim();
-    var ders = String(params.ders || "").trim();
-    var konu = String(params.konu || "").trim();
-    var tarih = String(params.tarih || "").trim();
-
-    if (!ogretmenEmail || !ders || !konu) {
-      return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Eksik ödev bilgisi gönderildi!" })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName("odevler");
-    if (!sheet) {
-      sheet = ss.insertSheet("odevler");
-      sheet.appendRow(["odevID", "ogretmenEmail", "hedefTip", "hedefSinif", "hedefSube", "hedefOgrNo", "ders", "konu", "tarih"]);
-    }
-
-    // Benzersiz bir ödev ID üret
-    var odevID = "ODV_" + Date.now();
-
-    // Sayfanın en altına yeni ödevi ekle
-    sheet.appendRow([odevID, ogretmenEmail, hedefTip, hedefSinif, hedefSube, hedefOgrNo, ders, konu, tarih]);
-
-    return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Ödev başarıyla kaydedildi." })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
 </script>
 
 </body>
