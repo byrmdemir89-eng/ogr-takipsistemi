@@ -141,12 +141,10 @@
             </div>
 
             <!-- BUTON VE BAŞLIK ALANI -->
-
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                 <h3 id="listeBaslik" style="margin: 0;">Sınıfınızdaki Öğrenciler</h3>
                 <button class="btn-save" onclick="manuelListeleTikla()" style="background-color: var(--secondary); padding: 8px 16px; font-size: 14px;">🔄 Öğrencileri Listele</button>
             </div>
-
 
             <div class="table-responsive">
                 <table>
@@ -166,14 +164,50 @@
 
         <!-- 3. ÖDEV & KAZANIM ATA SEKMESİ -->
         <div id="tab-odevVer" class="tab-content">
-            <h2>Öğrenciye Kazanım ve Ödev Atama</h2>
+            <h2>Esnek Ödev ve Kazanım Atama</h2>
             <div style="max-width: 600px;">
                 <div class="form-group">
-                    <label>Hedef Ödev Grubu:</label>
-                    <select id="hedefOgrenci">
-                        <option value="tumu">Sınıfımın Tüm Öğrencileri</option>
+                    <label>Atama Türü Seçin:</label>
+                    <select id="atamaTuru" onchange="atamaTurunuDegistir()">
+                        <option value="sinif">Sınıf ve Şubeye Ata</option>
+                        <option value="ogrenci">Özel Bir Öğrenciye Ata</option>
                     </select>
                 </div>
+
+                <!-- SINIF / ŞUBE SEÇİM ALANI -->
+                <div id="sinifSecimAlani">
+                    <div class="form-group">
+                        <label>Hedef Sınıf Seviyesi:</label>
+                        <select id="hedefSinifSeviye">
+                            <option value="Tumu">-- Tüm Sınıflar / Tümü --</option>
+                            <option value="5">5. Sınıf</option>
+                            <option value="6">6. Sınıf</option>
+                            <option value="7">7. Sınıf</option>
+                            <option value="8">8. Sınıf</option>
+                            <option value="9">9. Sınıf</option>
+                            <option value="10">10. Sınıf</option>
+                            <option value="11">11. Sınıf</option>
+                            <option value="12">12. Sınıf</option>
+                            <option value="Lisemezunu">Lise Mezunu</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Hedef Şube:</label>
+                        <input type="text" id="hedefSubeInput" placeholder="Örn: A, B, F veya Tümü">
+                    </div>
+                </div>
+
+                <!-- ÖZEL ÖĞRENCİ SEÇİM ALANI (Başlangıçta gizli) -->
+                <div id="ogrenciSecimAlani" style="display: none;">
+                    <div class="form-group">
+                        <label>Öğrenci Seçin (Ad - No - Sınıf):</label>
+                        <select id="hedefOgrNoSelect">
+                            <option value="">Önce atama türünü değiştirin veya yükleniyor...</option>
+                        </select>
+                        <small style="color: #7f8c8d;">Listeden dilediğiniz öğrenciyi seçebilirsiniz.</small>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Ders Seçin:</label>
                     <input type="text" id="odevDers" placeholder="Örn: Matematik">
@@ -186,7 +220,7 @@
                     <label>Son Teslim Tarihi:</label>
                     <input type="date" id="odevTarih">
                 </div>
-                <button class="btn-save" onclick="kazanimOdevAta()">Ödev / Kazanım Gönder</button>
+                <button class="btn-save" onclick="kazanimOdevAtaYeni()">Ödev / Kazanım Gönder</button>
             </div>
         </div>
 
@@ -265,7 +299,6 @@
             toggleSidebar();
         }
     }
-
 
     // Butona tıklandığında sınıfın öğrencilerini getirir
     function manuelListeleTikla() {
@@ -419,21 +452,160 @@
         document.getElementById('page-title').innerText = titles[tabId];
     }
 
-    function kazanimOdevAta() {
-        const ders = document.getElementById("odevDers").value.trim();
-        const konu = document.getElementById("odevKonu").value.trim();
-
-        if(!ders || !konu) {
-            alert("Lütfen ders ve kazanım/konu alanlarını doldurunuz!");
-            return;
+    // Atama türüne göre form alanlarını gizle/göster
+    function atamaTurunuDegistir() {
+        const tur = document.getElementById("atamaTuru").value;
+        if (tur === "sinif") {
+            document.getElementById("sinifSecimAlani").style.display = "block";
+            document.getElementById("ogrenciSecimAlani").style.display = "none";
+        } else {
+            document.getElementById("sinifSecimAlani").style.display = "none";
+            document.getElementById("ogrenciSecimAlani").style.display = "block";
+            tumOgrencileriYukleSelect(); // Tüm öğrencileri çek
         }
-        alert("Ödev ve kazanım başarıyla sınıfınızdaki öğrencilere atandı!");
     }
 
+    // Tüm öğrencileri çekip öğrenci seçim kutusunu doldurur
+    function tumOgrencileriYukleSelect() {
+        const selectBox = document.getElementById("hedefOgrNoSelect");
+        selectBox.innerHTML = `<option value="">Öğrenciler yükleniyor...</option>`;
+
+        fetch(`${SCRIPT_URL}?action=tumOgrencileriGetir`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.ogrenciler && data.ogrenciler.length > 0) {
+                let html = `<option value="">-- Öğrenci Seçiniz --</option>`;
+                data.ogrenciler.forEach(ogr => {
+                    html += `<option value="${ogr.ogrNo}">${ogr.adSoyad} (${ogr.sinif}-${ogr.sube} - No: ${ogr.ogrNo})</option>`;
+                });
+                selectBox.innerHTML = html;
+            } else {
+                selectBox.innerHTML = `<option value="">Kayıtlı öğrenci bulunamadı</option>`;
+            }
+        })
+        .catch(err => {
+            console.error("Öğrenci yükleme hatası:", err);
+            selectBox.innerHTML = `<option value="">Öğrenciler yüklenemedi</option>`;
+        });
+    }
+
+    // Yeni esnek ödev atama fonksiyonu
+    function kazanimOdevAtaYeni() {
+        const atamaTuru = document.getElementById("atamaTuru").value;
+        const ders = document.getElementById("odevDers").value.trim();
+        const konu = document.getElementById("odevKonu").value.trim();
+        const tarih = document.getElementById("odevTarih").value;
+
+        if (!ders || !konu) {
+            alert("Lütfen ders ve konu başlığını doldurunuz!");
+            return;
+        }
+
+        let hedefSinif = "Tumu";
+        let hedefSube = "Tumu";
+        let hedefOgrNo = "Tumu";
+
+        if (atamaTuru === "sinif") {
+            hedefSinif = document.getElementById("hedefSinifSeviye").value || "Tumu";
+            hedefSube = document.getElementById("hedefSubeInput").value.trim() || "Tumu";
+        } else {
+            hedefOgrNo = document.getElementById("hedefOgrNoSelect").value;
+            if (!hedefOgrNo) {
+                alert("Lütfen bir öğrenci seçin!");
+                return;
+            }
+        }
+
+        const url = `${SCRIPT_URL}?action=odevAta&email=${encodeURIComponent(aktifOgretmenEmail)}&tur=${atamaTuru}&sinif=${encodeURIComponent(hedefSinif)}&sube=${encodeURIComponent(hedefSube)}&ogrNo=${encodeURIComponent(hedefOgrNo)}&ders=${encodeURIComponent(ders)}&konu=${encodeURIComponent(konu)}&tarih=${encodeURIComponent(tarih)}`;
+
+        fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("Ödev başarıyla hedef kitleye atandı!");
+                document.getElementById("odevDers").value = "";
+                document.getElementById("odevKonu").value = "";
+            } else {
+                alert("Ödev atama hatası: " + data.error);
+            }
+        })
+        .catch(err => alert("Bağlantı hatası: " + err));
+    }
+   
     function cikisYap() {
         sessionStorage.clear();
         window.location.href = "ogretmenGiris.html";
     }
+// Tüm öğrencileri listele (Özel ödev atama için)
+function tumOgrencileriGetir(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("siniflar");
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify({ success: true, ogrenciler: [] })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var ogrenciler = [];
+
+    for (var i = 1; i < data.length; i++) {
+      var ogrNo = String(data[i][0] || "").replace(/\.0$/, "").trim();
+      var adSoyad = String(data[i][2] || "").trim();
+      var sinif = String(data[i][3] || "").trim();
+      var sube = String(data[i][4] || "").trim();
+
+      if (ogrNo !== "") {
+        ogrenciler.push({
+          ogrNo: ogrNo,
+          adSoyad: adSoyad,
+          sinif: sinif,
+          sube: sube
+        });
+      }
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ success: true, ogrenciler: ogrenciler })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString(), ogrenciler: [] })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Ödevi Google Sheets 'odevler' sayfasına kaydet
+function odevAtaKaydet(e) {
+  try {
+    var params = e && e.parameter ? e.parameter : {};
+    var ogretmenEmail = String(params.email || "").trim();
+    var hedefTip = String(params.tur || "sinif").trim(); // sinif veya ogrenci
+    var hedefSinif = String(params.sinif || "Tumu").trim();
+    var hedefSube = String(params.sube || "Tumu").trim();
+    var hedefOgrNo = String(params.ogrNo || "Tumu").trim();
+    var ders = String(params.ders || "").trim();
+    var konu = String(params.konu || "").trim();
+    var tarih = String(params.tarih || "").trim();
+
+    if (!ogretmenEmail || !ders || !konu) {
+      return ContentService.createTextOutput(JSON.stringify({ success: false, error: "Eksik ödev bilgisi gönderildi!" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("odevler");
+    if (!sheet) {
+      sheet = ss.insertSheet("odevler");
+      sheet.appendRow(["odevID", "ogretmenEmail", "hedefTip", "hedefSinif", "hedefSube", "hedefOgrNo", "ders", "konu", "tarih"]);
+    }
+
+    // Benzersiz bir ödev ID üret
+    var odevID = "ODV_" + Date.now();
+
+    // Sayfanın en altına yeni ödevi ekle
+    sheet.appendRow([odevID, ogretmenEmail, hedefTip, hedefSinif, hedefSube, hedefOgrNo, ders, konu, tarih]);
+
+    return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Ödev başarıyla kaydedildi." })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
 </script>
 
 </body>
