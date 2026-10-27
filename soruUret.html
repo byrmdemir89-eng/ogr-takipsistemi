@@ -20,10 +20,33 @@
         .btn-api { background-color: #3498db; }
         .btn-api:hover { background-color: #2980b9; }
         .spinner { display: none; text-align: center; margin: 20px 0; font-weight: bold; color: #2980b9; }
-        .soru-kart { background: #fdfdfd; border: 1px solid #e2e8f0; border-left: 5px solid #3498db; padding: 15px; border-radius: 6px; margin-top: 20px; }
+        
+        /* Soru Kartı Yapıları */
+        .soru-kart { background: #fdfdfd; border: 1px solid #e2e8f0; border-left: 5px solid #3498db; padding: 15px; border-radius: 6px; margin-top: 20px; transition: 0.3s; }
+        .soru-kart.kart-bos { background: #fffde7; border-left-color: #f1c40f; } /* Boş Soru Sarımsı */
+        .soru-kart.kart-dogru { border-left-color: #2ecc71; }
+        .soru-kart.kart-yanlis { border-left-color: #e74c3c; }
+
         .siklar { margin-top: 10px; }
-        .sik { padding: 8px; background: #edf2f7; margin-bottom: 5px; border-radius: 4px; }
-        .dogru { background: #d4edda; color: #155724; font-weight: bold; padding: 8px; border-radius: 4px; margin-top: 8px; }
+        .sik { padding: 10px; background: #edf2f7; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; border: 2px solid transparent; display: flex; justify-content: space-between; align-items: center; }
+        .sik:hover { background: #e2e8f0; }
+        .sik.secili { background: #ebf8ff; border-color: #3182ce; font-weight: bold; }
+        
+        /* Durum Renkleri ve Simgeler */
+        .sik.durum-dogru { background: #d4edda !important; border-color: #28a745 !important; color: #155724; font-weight: bold; }
+        .sik.durum-yanlis { background: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; font-weight: bold; }
+        .sik.gercek-dogru { border-color: #28a745 !important; background: #e8f5e9; }
+        
+        .simge-tik { color: #28a745; font-weight: bold; font-size: 18px; }
+        .simge-carpi { color: #dc3545; font-weight: bold; font-size: 18px; }
+        .bos-etiket { display: none; background: #f39c12; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; float: right; }
+        
+        /* Çözüm ve Cevap Kutuları */
+        .dogru-kutu { display: none; background: #d4edda; color: #155724; font-weight: bold; padding: 10px; border-radius: 6px; margin-top: 10px; }
+        .cozum-kutu { display: none; background: #fffaf0; border: 1px dashed #dd6b20; color: #7b341e; padding: 10px; border-radius: 6px; margin-top: 8px; font-size: 14px; }
+        .btn-cozum { display: none; background-color: #8e44ad; color: white; width: auto; padding: 8px 14px; font-size: 13px; margin-top: 8px; }
+        .btn-cozum:hover { background-color: #71368a; }
+        .sonuc-ozeti { display: none; background: #ebf8ff; border: 2px solid #3182ce; padding: 15px; border-radius: 8px; text-align: center; margin-top: 20px; font-size: 18px; font-weight: bold; color: #2b6cb0; }
     </style>
 </head>
 <body>
@@ -65,9 +88,9 @@
     <div class="form-group">
         <label for="soruSayisi">Soru Sayısı:</label>
         <select id="soruSayisi">
-            <option value="1">1 Soru</option>
-            <option value="3" selected>3 Soru</option>
-            <option value="5">5 Soru</option>
+            <option value="10">10 Soru</option>
+            <option value="15" selected>15 Soru</option>
+            <option value="30">30 Soru</option>
         </select>
     </div>
 
@@ -75,7 +98,9 @@
 
     <div id="loading" class="spinner">⏳ Yapay zeka MEB/Maarif modeline uygun sorular üretiyor, lütfen bekleyin...</div>
 
+    <div id="sonucOzeti" class="sonuc-ozeti"></div>
     <div id="soruAlani"></div>
+    <button id="btnSinavBitir" style="display:none; background-color: #e67e22; margin-top: 25px;" onclick="sinaviBitir()">📝 Sınavı Bitir ve Sonuçları Göster</button>
 </div>
 
 <script>
@@ -83,6 +108,8 @@
 
     const ogrNo = sessionStorage.getItem("girisYapanNo") || localStorage.getItem("ogrNo") || "TEST_OGRENCI";
     const adSoyad = sessionStorage.getItem("girisYapanAd") || localStorage.getItem("adSoyad");
+    let uretilenSorular = [];
+    let ogrenciCevaplari = {};
 
     if (adSoyad && ogrNo !== "TEST_OGRENCI") {
         document.getElementById("userInfo").innerText = `Öğrenci: ${adSoyad} (${ogrNo})`;
@@ -117,6 +144,8 @@
         const soruSayisi = document.getElementById("soruSayisi").value;
         const soruAlani = document.getElementById("soruAlani");
         const loading = document.getElementById("loading");
+        const btnSinavBitir = document.getElementById("btnSinavBitir");
+        const sonucOzeti = document.getElementById("sonucOzeti");
 
         if (!konu) {
             alert("Lütfen bir konu başlığı girin!");
@@ -124,7 +153,14 @@
         }
 
         soruAlani.innerHTML = "";
+        sonucOzeti.style.display = "none";
+        btnSinavBitir.style.display = "none";
+        btnSinavBitir.disabled = false;
+        btnSinavBitir.style.opacity = "1";
+        btnSinavBitir.innerText = "📝 Sınavı Bitir ve Sonuçları Göster";
         loading.style.display = "block";
+        ogrenciCevaplari = {};
+        uretilenSorular = [];
 
         fetch(`${SCRIPT_URL}?action=soruUret&ogrNo=${encodeURIComponent(ogrNo)}&ders=${encodeURIComponent(ders)}&konu=${encodeURIComponent(konu)}&soruSayisi=${soruSayisi}`)
         .then(res => {
@@ -136,7 +172,6 @@
         .then(data => {
             loading.style.display = "none";
 
-            // Eğer sunucudan dizi yerine obje/hata döndüyse:
             if (!Array.isArray(data)) {
                 if (data.error === "API_KEY_YOK") {
                     alert(data.message);
@@ -151,29 +186,146 @@
                 return;
             }
 
-            // Gelen veri başarıyla dizi olarak ayrıştırıldıysa soruları çizdir:
+            uretilenSorular = data;
+
             data.forEach((item, index) => {
                 let html = `
-                    <div class="soru-kart">
+                    <div class="soru-kart" id="soruKart_${index}">
+                        <span class="bos-etiket" id="bosEtiket_${index}">❓ Boş Bırakıldı</span>
                         <strong>Soru ${index + 1}:</strong> ${item.soruMetni || ''}
                         <div class="siklar">
-                            <div class="sik"><b>A)</b> ${item.siklar ? item.siklar.A : ''}</div>
-                            <div class="sik"><b>B)</b> ${item.siklar ? item.siklar.B : ''}</div>
-                            <div class="sik"><b>C)</b> ${item.siklar ? item.siklar.C : ''}</div>
-                            <div class="sik"><b>D)</b> ${item.siklar ? item.siklar.D : ''}</div>
+                            <div class="sik" data-harf="A" onclick="sikSec(${index}, 'A', this)">
+                                <span><b>A)</b> ${item.siklar ? item.siklar.A : ''}</span>
+                                <span class="durum-simge"></span>
+                            </div>
+                            <div class="sik" data-harf="B" onclick="sikSec(${index}, 'B', this)">
+                                <span><b>B)</b> ${item.siklar ? item.siklar.B : ''}</span>
+                                <span class="durum-simge"></span>
+                            </div>
+                            <div class="sik" data-harf="C" onclick="sikSec(${index}, 'C', this)">
+                                <span><b>C)</b> ${item.siklar ? item.siklar.C : ''}</span>
+                                <span class="durum-simge"></span>
+                            </div>
+                            <div class="sik" data-harf="D" onclick="sikSec(${index}, 'D', this)">
+                                <span><b>D)</b> ${item.siklar ? item.siklar.D : ''}</span>
+                                <span class="durum-simge"></span>
+                            </div>
                         </div>
-                        <div class="dogru">✅ Doğru Cevap: ${item.dogruCevap || ''}</div>
-                        <small style="color: #666; display:block; margin-top:5px;"><b>Çözüm:</b> ${item.cozum || ''}</small>
+                        <div class="dogru-kutu" id="dogruKutu_${index}">✅ Doğru Cevap: ${item.dogruCevap || ''}</div>
+                        <button class="btn-cozum" id="btnCozum_${index}" onclick="cozumGoster(${index})">💡 Çözümü Göster</button>
+                        <div class="cozum-kutu" id="cozumKutu_${index}"><b>Çözüm:</b> ${item.cozum || 'Çözüm detaylandırılmamış.'}</div>
                     </div>
                 `;
                 soruAlani.innerHTML += html;
             });
+
+            btnSinavBitir.style.display = "block";
         })
         .catch(err => {
             loading.style.display = "none";
             alert("Hata Oluştu: " + err.message);
             console.error("Detaylı Hata:", err);
         });
+    }
+
+    function sikSec(soruIndex, harf, el) {
+        // Sınav bittiyse tıklamayı engelle
+        if (document.getElementById("btnSinavBitir").disabled) return;
+
+        const parent = el.parentElement;
+        const siklar = parent.querySelectorAll('.sik');
+        siklar.forEach(s => s.classList.remove('secili'));
+
+        el.classList.add('secili');
+        ogrenciCevaplari[soruIndex] = harf;
+    }
+
+    function sinaviBitir() {
+        if (Object.keys(ogrenciCevaplari).length < uretilenSorular.length) {
+            if (!confirm("Henüz cevaplamadığınız sorular var. Yine de sınavı tamamlamak istiyor musunuz?")) {
+                return;
+            }
+        }
+
+        let dogruSayisi = 0;
+        let yanlisSayisi = 0;
+        let bosSayisi = 0;
+
+        uretilenSorular.forEach((item, index) => {
+            const kart = document.getElementById(`soruKart_${index}`);
+            const siklar = kart.querySelectorAll('.sik');
+            const secilenHarf = ogrenciCevaplari[index];
+            const dogruHarf = item.dogruCevap ? item.dogruCevap.trim().toUpperCase() : '';
+
+            // Doğru cevap kutusu ve Çözüm Butonunu aktif et
+            document.getElementById(`dogruKutu_${index}`).style.display = "block";
+            document.getElementById(`btnCozum_${index}`).style.display = "inline-block";
+
+            if (!secilenHarf) {
+                // BOŞ BIRAKILAN SORU
+                bosSayisi++;
+                kart.classList.add('kart-bos');
+                document.getElementById(`bosEtiket_${index}`).style.display = "inline-block";
+                
+                // Gerçek doğru şıkkı göster
+                siklar.forEach(sikEl => {
+                    if (sikEl.getAttribute('data-harf') === dogruHarf) {
+                        sikEl.classList.add('gercek-dogru');
+                    }
+                });
+            } else {
+                // İŞARETLENEN SORU
+                siklar.forEach(sikEl => {
+                    const harf = sikEl.getAttribute('data-harf');
+                    const simgeAlani = sikEl.querySelector('.durum-simge');
+
+                    if (harf === secilenHarf) {
+                        if (secilenHarf === dogruHarf) {
+                            // DOĞRU CEVAP
+                            sikEl.classList.add('durum-dogru');
+                            simgeAlani.innerHTML = `<span class="simge-tik">✔</span>`;
+                            kart.classList.add('kart-dogru');
+                        } else {
+                            // YANLIŞ CEVAP
+                            sikEl.classList.add('durum-yanlis');
+                            simgeAlani.innerHTML = `<span class="simge-carpi">❌</span>`;
+                            kart.classList.add('kart-yanlis');
+                        }
+                    } else if (harf === dogruHarf) {
+                        // Yanlış bilindiyse gerçek doğruyu yeşil çerçeve ile vurgula
+                        sikEl.classList.add('gercek-dogru');
+                    }
+                });
+
+                if (secilenHarf === dogruHarf) {
+                    dogruSayisi++;
+                } else {
+                    yanlisSayisi++;
+                }
+            }
+        });
+
+        // Üst Özet Tablosu
+        const toplamSoru = uretilenSorular.length;
+        const puan = Math.round((dogruSayisi / toplamSoru) * 100);
+        const sonucOzeti = document.getElementById("sonucOzeti");
+        sonucOzeti.innerHTML = `📊 Sınav Sonucunuz: <span style="color:#27ae60;">${dogruSayisi} Doğru</span> | <span style="color:#e74c3c;">${yanlisSayisi} Yanlış</span> | <span style="color:#f39c12;">${bosSayisi} Boş</span> <br> 🏆 Başarı Puanı: %${puan}`;
+        sonucOzeti.style.display = "block";
+
+        // Bitir Butonunu Kilitle
+        const btnSinavBitir = document.getElementById("btnSinavBitir");
+        btnSinavBitir.disabled = true;
+        btnSinavBitir.style.opacity = "0.6";
+        btnSinavBitir.innerText = "🔒 Sınav Tamamlandı";
+    }
+
+    function cozumGoster(index) {
+        const cozumKutu = document.getElementById(`cozumKutu_${index}`);
+        if (cozumKutu.style.display === "block") {
+            cozumKutu.style.display = "none";
+        } else {
+            cozumKutu.style.display = "block";
+        }
     }
 </script>
 

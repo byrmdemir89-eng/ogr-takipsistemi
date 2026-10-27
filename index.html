@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Öğrenci Çalışma Takip Formu</title>
+    <title>Öğrenci Takip & Ödev Paneli</title>
     <style>
-        /* Genel Stil ve Üst Menü Boşluğu Ayarı */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; padding-top: 85px; }
         
         /* Üst Sabit Navigasyon Çubuğu */
@@ -26,131 +25,59 @@
             z-index: 1000;
         }
 
-        .navbar-logo {
-            font-size: 16px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Bilgisayar Ekranı İçin Menü Butonları */
-        .nav-links {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .nav-links button {
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 13px;
-            color: white;
-            transition: opacity 0.2s;
-        }
+        .navbar-logo { font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .nav-links { display: flex; gap: 10px; align-items: center; }
+        .nav-links button { border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; color: white; transition: opacity 0.2s; }
         .nav-links button:hover { opacity: 0.85; }
 
-        /* Mobil Hamburger Butonu */
-        .hamburger {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 26px;
-            cursor: pointer;
-        }
+        .hamburger { display: none; background: none; border: none; color: white; font-size: 26px; cursor: pointer; }
 
-        /* Mobilde Yandan Açılan Menü (Sidebar) */
-        .mobile-sidebar {
-            position: fixed;
-            top: 0;
-            left: -280px;
-            width: 260px;
-            height: 100%;
-            background-color: #2c3e50;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            box-sizing: border-box;
-            transition: left 0.3s ease;
-            z-index: 1100;
-            box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-        }
-
+        /* Mobil Yandan Açılan Menü */
+        .mobile-sidebar { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background-color: #2c3e50; color: white; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; transition: left 0.3s ease; z-index: 1100; box-shadow: 5px 0 15px rgba(0,0,0,0.3); }
         .mobile-sidebar.active { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 12px; font-weight: bold; }
+        .close-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
+        .mobile-sidebar button { width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; text-align: left; color: white; }
 
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            padding-bottom: 12px;
-            font-weight: bold;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .mobile-sidebar button {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: left;
-            color: white;
-        }
-
-        /* Karartma Perdesi (Overlay) */
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1050;
-        }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; }
         .overlay.active { display: block; }
 
-        /* Form ve Kart Tasarımı */
-        .card { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2, h3 { text-align: center; color: #2c3e50; }
+        /* Sekme Butonları */
+        .tab-menu { display: flex; gap: 10px; max-width: 800px; margin: 0 auto 20px auto; flex-wrap: wrap; }
+        .tab-btn { flex: 1; min-width: 150px; padding: 12px; background: #e2e8f0; border: none; border-radius: 8px; font-weight: bold; color: #334155; cursor: pointer; text-align: center; transition: 0.3s; }
+        .tab-btn.active { background: #2c3e50; color: white; }
+
+        /* Kart Yapısı */
+        .card { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none; }
+        .card.active { display: block; }
+
+        h2, h3 { text-align: center; color: #2c3e50; margin-top: 0; }
         .form-group { margin-bottom: 15px; }
         label { font-weight: 600; display: block; margin-bottom: 5px; color: #34495e; }
         select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        input[readonly] { background-color: #eef2f5; font-weight: bold; color: #2c3e50; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        button[type="submit"] { width: 100%; padding: 12px; background-color: #27ae60; color: white; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        button[type="submit"]:hover { background-color: #219150; }
-        #status { margin-top: 15px; text-align: center; font-weight: bold; }
+        
+        button.btn-primary { width: 100%; padding: 12px; background-color: #27ae60; color: white; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button.btn-primary:hover { background-color: #219150; }
+
         .summary-box { background: #eef2f5; padding: 10px; border-radius: 6px; margin-top: 10px; text-align: center; font-weight: bold; color: #2c3e50; }
         
-        .history-container { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        /* Tablo Stilleri */
+        .table-responsive { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background-color: #2c3e50; color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
 
-        /* Responsive Ayarı (Mobilde üst menüyü gizle, hamburgeri aç) */
+        .badge-success { background: #27ae60; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .badge-warning { background: #f39c12; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .btn-complete { background: #3498db; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
         @media (max-width: 768px) {
             .nav-links { display: none; }
             .hamburger { display: block; }
             body { padding-top: 75px; }
+            .grid-3 { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -161,20 +88,16 @@
     <div class="navbar-logo">
         <span id="userInfoHeader">Yükleniyor...</span>
     </div>
-    
-    <!-- Bilgisayar İçin Üst Butonlar -->
     <div class="nav-links">
         <button onclick="window.location.href='soruUret.html'" style="background-color: #3498db;">🤖 Soru Üret</button>
         <button onclick="window.location.href='soruYukle.html'" style="background-color: #e67e22;">📸 Soru Yükle</button>
         <button onclick="window.location.href='dersKonusunuGetir.html'" style="background-color: #27ae60;">📖 Konu Çalışma</button>
         <button onclick="cikisYap()" style="background-color: #e74c3c;">Çıkış Yap</button>
     </div>
-
-    <!-- Mobil Hamburger Butonu -->
     <button class="hamburger" onclick="menuAc()">☰</button>
 </nav>
 
-<!-- MOBİL YANDAN AÇILAN MENÜ (SİDEBAR) -->
+<!-- MOBİL SİDEBAR -->
 <div class="mobile-sidebar" id="mobileSidebar">
     <div class="sidebar-header">
         <span>Menü</span>
@@ -185,236 +108,179 @@
     <button onclick="window.location.href='dersKonusunuGetir.html'" style="background-color: #27ae60;">📖 Konu Çalışma</button>
     <button onclick="cikisYap()" style="background-color: #e74c3c; margin-top: 20px;">🚪 Çıkış Yap</button>
 </div>
-
-<!-- Menü Açıkken Arkadaki Karartma Perdesi -->
 <div class="overlay" id="menuOverlay" onclick="menuKapat()"></div>
 
-<div class="card">
-  <h2>Günlük Çalışma Takip Formu</h2>
-  <form id="studyForm">
-    
-    <div class="grid-3">
-      <div class="form-group">
-        <label>Gün:</label>
-        <select id="gun" required>
-          <option value="Pazartesi">Pazartesi</option>
-          <option value="Salı">Salı</option>
-          <option value="Çarşamba">Çarşamba</option>
-          <option value="Perşembe">Perşembe</option>
-          <option value="Cuma">Cuma</option>
-          <option value="Cumartesi">Cumartesi</option>
-          <option value="Pazar">Pazar</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Blok:</label>
-        <select id="blok" required>
-          <option value="1. Blok">1. Blok</option>
-          <option value="2. Blok">2. Blok</option>
-          <option value="3. Blok">3. Blok</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Ders:</label>
-        <select id="ders" required>
-          <option value="Türkçe">Türkçe</option>
-          <option value="Matematik">Matematik</option>
-          <option value="Fen Bilimleri">Fen Bilimleri</option>
-          <option value="Sosyal Bilgiler">Sosyal Bilgiler</option>
-          <option value="İngilizce">İngilizce</option>
-          <option value="Din Kültürü">Din Kültürü</option>
-          <option value="Paragraf">Paragraf</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>15 Dk Konu Çalışması Yapıldı mı?</label>
-      <select id="konuCalisildi" required>
-        <option value="Evet, Tamamlandı">Evet, Tamamlandı</option>
-        <option value="Kısmen Yapıldı">Kısmen Yapıldı</option>
-        <option value="Hayır, Yapılmadı">Hayır, Yapılmadı</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Konu Çalışmama / Eksik Nedeni (Varsa):</label>
-      <input type="text" id="eksikNedeni" placeholder="Örn: Zaman yetmedi">
-    </div>
-
-    <div class="form-group">
-      <label>Hedef Soru Sayısı:</label>
-      <input type="number" id="hedefSoru" value="10" required>
-    </div>
-
-    <div class="grid-3">
-      <div class="form-group">
-        <label>Doğru:</label>
-        <input type="number" id="dogru" value="0" min="0" required>
-      </div>
-      <div class="form-group">
-        <label>Yanlış:</label>
-        <input type="number" id="yanlis" value="0" min="0" required>
-      </div>
-      <div class="form-group">
-        <label>Boş:</label>
-        <input type="number" id="bos" value="0" min="0" required>
-      </div>
-    </div>
-
-    <div class="summary-box" id="toplamOzet">
-      Toplam Çözülen Soru: 0 | Hesaplanan Net: 0.00
-    </div>
-
-    <button type="submit" id="submitBtn">Kaydet ve Gönder</button>
-  </form>
-  <div id="status"></div>
-
-  <div class="history-container">
-    <h3>Geçmiş Çalışmalarınız</h3>
-    <div style="overflow-x: auto;">
-      <table>
-        <thead>
-          <tr>
-            <th>Tarih</th>
-            <th>Gün</th>
-            <th>Ders</th>
-            <th>Hedef</th>
-            <th>Çözülen</th>
-            <th>Net</th>
-            <th>Durum</th>
-          </tr>
-        </thead>
-        <tbody id="historyTableBody">
-          <tr><td colspan="7">Yükleniyor...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+<!-- SEKME MENÜSÜ -->
+<div class="tab-menu">
+    <button class="tab-btn active" onclick="switchTab('tab-odevler')">📚 Öğretmen Ödevleri</button>
+    <button class="tab-btn" onclick="switchTab('tab-form')">📝 Günlük Çalışma Gir</button>
+    <button class="tab-btn" onclick="switchTab('tab-gecmis')">📊 Çalışma Geçmişi</button>
+    <button class="tab-btn" onclick="switchTab('tab-profil')">👤 Bilgilerim</button>
 </div>
 
-<script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwWvH9F5Fo608nAe9bPdAOoiVhGnNQUzpJ1jf1DXqBex9ksdfsmRp4ORNZeWTdo4L8/exec";
+<!-- 1. ÖĞRETMENDEN GELEN ÖDEVLER SEKMESİ -->
+<div id="tab-odevler" class="card active">
+    <h2>Atanan Ödev ve Kazanımlar</h2>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Ders</th>
+                    <th>Kazanım / Konu</th>
+                    <th>Son Tarih</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody id="odevlerTableBody">
+                <tr><td colspan="6">Ödevler yükleniyor...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
-  const aktifNo = sessionStorage.getItem("girisYapanNo") || localStorage.getItem("ogrNo");
-  const aktifAd = sessionStorage.getItem("girisYapanAd") || localStorage.getItem("adSoyad");
+<!-- 2. GÜNLÜK ÇALIŞMA FORMU SEKMESİ -->
+<div id="tab-form" class="card">
+    <h2>Günlük Çalışma Takip Formu</h2>
+    <form id="studyForm">
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Gün:</label>
+                <select id="gun" required>
+                    <option value="Pazartesi">Pazartesi</option>
+                    <option value="Salı">Salı</option>
+                    <option value="Çarşamba">Çarşamba</option>
+                    <option value="Perşembe">Perşembe</option>
+                    <option value="Cuma">Cuma</option>
+                    <option value="Cumartesi">Cumartesi</option>
+                    <option value="Pazar">Pazar</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Blok:</label>
+                <select id="blok" required>
+                    <option value="1. Blok">1. Blok</option>
+                    <option value="2. Blok">2. Blok</option>
+                    <option value="3. Blok">3. Blok</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ders:</label>
+                <select id="ders" required>
+                    <option value="Türkçe">Türkçe</option>
+                    <option value="Matematik">Matematik</option>
+                    <option value="Fen Bilimleri">Fen Bilimleri</option>
+                    <option value="Sosyal Bilgiler">Sosyal Bilgiler</option>
+                    <option value="İngilizce">İngilizce</option>
+                    <option value="Din Kültürü">Din Kültürü</option>
+                    <option value="Paragraf">Paragraf</option>
+                </select>
+            </div>
+        </div>
 
-  if (!aktifNo || !aktifAd) {
-    window.location.replace("indexLogin.html");
-  } else {
-    document.getElementById("userInfoHeader").innerText = `Öğrenci: ${aktifAd} (${aktifNo})`;
-    gecmisiGetir(aktifNo);
-  }
+        <div class="form-group">
+            <label>15 Dk Konu Çalışması Yapıldı mı?</label>
+            <select id="konuCalisildi" required>
+                <option value="Evet, Tamamlandı">Evet, Tamamlandı</option>
+                <option value="Kısmen Yapıldı">Kısmen Yapıldı</option>
+                <option value="Hayır, Yapılmadı">Hayır, Yapılmadı</option>
+            </select>
+        </div>
 
-  // Mobil Menü Kontrol Fonksiyonları
-  function menuAc() {
-      document.getElementById('mobileSidebar').classList.add('active');
-      document.getElementById('menuOverlay').classList.add('active');
-  }
+        <div class="form-group">
+            <label>Konu Çalışmama / Eksik Nedeni (Varsa):</label>
+            <input type="text" id="eksikNedeni" placeholder="Örn: Zaman yetmedi">
+        </div>
 
-  function menuKapat() {
-      document.getElementById('mobileSidebar').classList.remove('active');
-      document.getElementById('menuOverlay').classList.remove('active');
-  }
+        <div class="form-group">
+            <label>Hedef Soru Sayısı:</label>
+            <input type="number" id="hedefSoru" value="10" required>
+        </div>
 
-  function cikisYap() {
-    sessionStorage.clear();
-    localStorage.clear();
-    window.location.replace("indexLogin.html");
-  }
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Doğru:</label>
+                <input type="number" id="dogru" value="0" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Yanlış:</label>
+                <input type="number" id="yanlis" value="0" min="0" required>
+            </div>
+            <div class="form-group">
+                <label>Boş:</label>
+                <input type="number" id="bos" value="0" min="0" required>
+            </div>
+        </div>
 
-  function gecmisiGetir(no) {
-    fetch(`${SCRIPT_URL}?no=${no}&islem=gecmis`)
-      .then(res => res.json())
-      .then(data => {
-        const tbody = document.getElementById('historyTableBody');
-        tbody.innerHTML = "";
-        if (data.success && data.gecmis && data.gecmis.length > 0) {
-          data.gecmis.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${item.tarih}</td>
-              <td>${item.gun} (${item.blok})</td>
-              <td>${item.ders}</td>
-              <td>${item.hedef}</td>
-              <td>${item.cozulen}</td>
-              <td><b>${item.net}</b></td>
-              <td style="color: ${item.durum === 'Tamamlandı' ? 'green' : 'red'};">${item.durum}</td>
-            `;
-            tbody.appendChild(tr);
-          });
-        } else {
-          tbody.innerHTML = `<tr><td colspan="7">Henüz kayıtlı çalışmanız bulunmuyor.</td></tr>`;
-        }
-      })
-      .catch(err => {
-        document.getElementById('historyTableBody').innerHTML = `<tr><td colspan="7" style="color:red;">Geçmiş yüklenemedi.</td></tr>`;
-      });
-  }
+        <div class="summary-box" id="toplamOzet">
+            Toplam Çözülen Soru: 0 | Hesaplanan Net: 0.00
+        </div>
 
-  function hesaplaOzet() {
-    const d = parseInt(document.getElementById('dogru').value) || 0;
-    const y = parseInt(document.getElementById('yanlis').value) || 0;
-    const b = parseInt(document.getElementById('bos').value) || 0;
-    const cozulen = d + y + b;
-    const net = (d - (y / 3)).toFixed(2);
-    document.getElementById('toplamOzet').innerText = `Toplam Çözülen Soru: ${cozulen} | Hesaplanan Net: ${net}`;
-  }
+        <button type="submit" class="btn-primary" id="submitBtn">Kaydet ve Gönder</button>
+    </form>
+    <div id="status" style="margin-top:15px; text-align:center; font-weight:bold;"></div>
+</div>
 
-  document.getElementById('dogru').addEventListener('input', hesaplaOzet);
-  document.getElementById('yanlis').addEventListener('input', hesaplaOzet);
-  document.getElementById('bos').addEventListener('input', hesaplaOzet);
+<!-- 3. ÇALIŞMA GEÇMİŞİ SEKMESİ -->
+<div id="tab-gecmis" class="card">
+    <h2>Geçmiş Çalışmalarınız</h2>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Gün</th>
+                    <th>Ders</th>
+                    <th>Hedef</th>
+                    <th>Çözülen</th>
+                    <th>Net</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody">
+                <tr><td colspan="7">Yükleniyor...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
-  document.getElementById('studyForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const statusDiv = document.getElementById('status');
+<!-- 4. ÖĞRENCİ BİLGİLERİM SEKMESİ -->
+<div id="tab-profil" class="card">
+    <h2>Öğrenci Bilgilerini Düzenle</h2>
+    <div class="form-group">
+        <label>Öğrenci Numarası (Değiştirilemez):</label>
+        <input type="text" id="profilOgrNo" disabled style="background:#eee;">
+    </div>
+    <div class="form-group">
+        <label>Ad Soyad:</label>
+        <input type="text" id="profilAdSoyad">
+    </div>
+   <div class="form-group">
+        <label>Şifre:</label>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="password" id="profilSifre" style="flex: 1;">
+            <button type="button" id="sifreToggleBtn" onclick="sifreGosterGizle()" style="padding: 8px 12px; cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 4px;">Göster</button>
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Sınıf Seviyesi:</label>
+        <input type="text" id="profilSinif" placeholder="Örn: 5, 6, 7...">
+    </div>
+    <div class="form-group">
+        <label>Şube:</label>
+        <input type="text" id="profilSube" placeholder="Örn: A, B, F...">
+    </div>
+    <button class="btn-primary" onclick="profilBilgiGuncelle()">Bilgilerimi Güncelle</button>
+</div>
+<!-- Ortak Yapı ve Oturum Yönetimi (En başta yüklenmeli) -->
+<script src="script/ortak.js"></script>
 
-    statusDiv.innerText = "Kaydediliyor...";
-    statusDiv.style.color = "blue";
-
-    const payload = {
-      ogrenciNo: aktifNo,
-      ogrenciIsim: aktifAd,
-      gun: document.getElementById('gun').value,
-      blok: document.getElementById('blok').value,
-      ders: document.getElementById('ders').value,
-      konuCalisildi: document.getElementById('konuCalisildi').value,
-      eksikNedeni: document.getElementById('eksikNedeni').value,
-      hedefSoru: parseInt(document.getElementById('hedefSoru').value) || 0,
-      dogru: parseInt(document.getElementById('dogru').value) || 0,
-      yanlis: parseInt(document.getElementById('yanlis').value) || 0,
-      bos: parseInt(document.getElementById('bos').value) || 0
-    };
-
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.result === "success") {
-        statusDiv.innerText = "🎉 Başarıyla kaydedildi!";
-        statusDiv.style.color = "green";
-        
-        document.getElementById('dogru').value = 0;
-        document.getElementById('yanlis').value = 0;
-        document.getElementById('bos').value = 0;
-        document.getElementById('eksikNedeni').value = "";
-        hesaplaOzet();
-
-        gecmisiGetir(aktifNo);
-        setTimeout(() => { statusDiv.innerText = ""; }, 2000);
-      } else {
-        statusDiv.innerText = "❌ Kaydedilemedi!";
-        statusDiv.style.color = "red";
-      }
-    })
-    .catch(error => {
-      statusDiv.innerText = "❌ Hata oluştu: " + error;
-      statusDiv.style.color = "red";
-    });
-  });
-</script>
+<!-- Modüler Dosya Yolları (script/aksiyonScript klasörü altında) -->
+<script src="script/aksiyonScript/profil.js"></script>
+<script src="script/aksiyonScript/odevler.js"></script>
+<script src="script/aksiyonScript/gunlukCalisma.js"></script>
+<script src="script/aksiyonScript/gecmis.js"></script>
 
 </body>
 </html>

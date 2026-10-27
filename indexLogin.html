@@ -137,12 +137,18 @@
                 if (data.error) {
                     alert("Hata: " + data.error);
                 } else {
-                    // Giriş başarılı! Bilgileri tarayıcı hafızasına (localStorage) kaydedelim
+                    // Giriş başarılı! Bilgileri hem localStorage hem sessionStorage'a kaydedelim
                     localStorage.setItem("ogrNo", data.ogrNo);
                     localStorage.setItem("adSoyad", data.adSoyad);
-                    localStorage.setItem("sinif", data.sinif);
+                    localStorage.setItem("sinif", data.sinif || "");
+                    localStorage.setItem("sube", data.sube || "");
 
-                   // alert("🎉 Giriş başarılı, yönlendiriliyorsunuz!");
+                    // Oturum hafızasına eksiksiz yazıyoruz (Profil sayfasının dolması için)
+                    sessionStorage.setItem("girisYapanNo", data.ogrNo);
+                    sessionStorage.setItem("girisYapanAd", data.adSoyad);
+                    sessionStorage.setItem("girisYapanSifre", data.sifre || sifre); // Şifre dönmezse girileni al
+                    sessionStorage.setItem("girisYapanSinif", data.sinif || "");
+                    sessionStorage.setItem("girisYapanSube", data.sube || "");
                     
                     // Ana uygulama sayfasına yönlendirme (index.html)
                     window.location.href = "index.html";
